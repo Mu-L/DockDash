@@ -45,7 +45,7 @@ export class ServiceRepository {
   }
 
   updateService(id: string, data: UpdateServiceRequest): Service {
-    if (!this.getService(id)) throw new Error("Service not found");
+    this.requireService(id);
 
     orm
       .update(services)
@@ -59,7 +59,7 @@ export class ServiceRepository {
       .where(eq(services.id, id))
       .run();
 
-    return this.getService(id)!;
+    return this.requireService(id);
   }
 
   updateServiceMetadata(id: string, patch: Partial<ServiceMetadata>): void {
@@ -106,6 +106,14 @@ export class ServiceRepository {
     const row = orm.select().from(services).where(eq(services.id, id)).get();
 
     return row ?? undefined;
+  }
+
+  requireService(id: string): Service {
+    const service = this.getService(id);
+
+    if (!service) throw new Error("Service not found");
+
+    return service;
   }
 
   deleteService(id: string): void {

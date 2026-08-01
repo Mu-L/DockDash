@@ -6,14 +6,18 @@ import type { ContainerStats } from "@shared";
 import { Service, ServiceSource, ServiceStatus } from "@shared";
 
 import { serviceRepository } from "../../db/serviceRepository.js";
-import { type ContainerStateMap, DOCKER_CONTAINER_STATE, DockerService } from "../dockerService.js";
+import {
+  type ContainerStateMap,
+  DOCKER_CONTAINER_STATE,
+  DockerRuntime,
+} from "../containerRuntime/dockerRuntime.js";
 
 // ---------------------------------------------------------------------------
 // Fake container definitions
 // ---------------------------------------------------------------------------
 
 const MOCK_HOST = "unix:///var/run/docker.sock";
-const MOCK_HOST_ID = DockerService.hostId(MOCK_HOST);
+const MOCK_HOST_ID = DockerRuntime.hostId(MOCK_HOST);
 
 export interface MockContainerDef {
   name: string;
@@ -153,16 +157,16 @@ const MOCK_LOG_LINES = [
 ];
 
 // ---------------------------------------------------------------------------
-// MockDockerService — extends DockerService to guarantee interface compatibility
+// MockDockerRuntime — extends DockerRuntime to guarantee interface compatibility
 // ---------------------------------------------------------------------------
 
-export class MockDockerService extends DockerService {
+export class MockDockerRuntime extends DockerRuntime {
   override resolveHost(dockerHostId: string): string | undefined {
     return dockerHostId === MOCK_HOST_ID ? MOCK_HOST : undefined;
   }
 
-  override getContainerForServiceId(serviceId: string): Docker.Container {
-    return stubContainer(serviceId);
+  override getContainer(service: Service): Docker.Container {
+    return stubContainer(service.id!);
   }
 
   override createDockerClientForHost(_host: string): Docker {
@@ -272,4 +276,4 @@ export class MockDockerService extends DockerService {
   }
 }
 
-export const mockDockerService = new MockDockerService();
+export const mockDockerRuntime = new MockDockerRuntime();

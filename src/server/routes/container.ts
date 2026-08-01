@@ -4,8 +4,9 @@ import { ContainerAction } from "@shared";
 import type { ApiSuccess, ContainerStats } from "@shared/responseSchemas.js";
 import { SSE_EVENT } from "@shared/types.js";
 
+import { serviceRepository } from "../db/serviceRepository.js";
 import { config } from "../lib/config.js";
-import { dockerService } from "../services/dockerService.js";
+import { containerRuntimeService } from "../services/containerRuntime/containerRuntimeService.js";
 import { healthCheckService } from "../services/healthCheckService.js";
 
 const router = Router();
@@ -22,11 +23,9 @@ router.post("/services/:id/container/:action", async (req, res) => {
   }
 
   try {
-    const container = dockerService.getContainerForServiceId(req.params.id);
+    const service = serviceRepository.requireService(req.params.id);
 
-    if (action === ContainerAction.STOP) await container.stop();
-    else if (action === ContainerAction.START) await container.start();
-    else await container.restart();
+    await containerRuntimeService.getRuntime(service).action(service, action);
 
     healthCheckService.checkSingleService(req.params.id);
 
@@ -44,8 +43,8 @@ router.get("/services/:id/stats", async (req, res) => {
   }
 
   try {
-    const container = dockerService.getContainerForServiceId(req.params.id);
-    const stats = await dockerService.getContainerStats(container);
+    const service = serviceRepository.requireService(req.params.id);
+    const stats = await containerRuntimeService.getRuntime(service).stats(service);
 
     res.json(stats satisfies ContainerStats);
   } catch (err) {
@@ -73,9 +72,9 @@ router.get("/services/:id/logs/stream", async (req, res) => {
   });
 
   try {
-    const container = dockerService.getContainerForServiceId(req.params.id);
+    const service = serviceRepository.requireService(req.params.id);
 
-    logStream = await dockerService.openLogStream(container);
+    logStream = await containerRuntimeService.getRuntime(service).logs(service);
 
     logStream.on("data", (chunk: Buffer) => {
       if (!closed) res.write(`data: ${chunk.toString("utf8")}\n\n`);

@@ -8,14 +8,49 @@ import type {
 import { SSE_EVENT } from "@shared/types.js";
 
 import { validateNetworkCidr } from "../lib/validate.js";
-import { dockerService } from "../services/dockerService.js";
+import { dockerRuntime } from "../services/containerRuntime/dockerRuntime.js";
+import { kubernetesRuntime } from "../services/kubernetesRuntime.js";
 import { networkScanner } from "../services/networkScanner.js";
 
 const router = Router();
 
+router.get("/kubernetes/health", async (_req, res) => res.json(await kubernetesRuntime.health()));
+
+router.get("/kubernetes/scan/stream", async (req, res) => {
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders();
+  let closed = false;
+
+  req.on("close", () => {
+    closed = true;
+  });
+  let count = 0;
+
+  try {
+    for await (const service of kubernetesRuntime.scan()) {
+      if (closed) break;
+
+      res.write(`data: ${JSON.stringify(service)}\n\n`);
+      count++;
+    }
+  } catch (err) {
+    if (!closed)
+      res.write(
+        `event: ${SSE_EVENT.SCAN_ERROR}\ndata: ${JSON.stringify({ message: err instanceof Error ? err.message : String(err) })}\n\n`,
+      );
+  }
+
+  if (!closed) {
+    res.write(`event: ${SSE_EVENT.DONE}\ndata: ${JSON.stringify({ count })}\n\n`);
+    res.end();
+  }
+});
+
 // Docker hosts health
 router.get("/docker/health", async (_req, res) => {
-  const clients = dockerService.createDockerClients();
+  const clients = dockerRuntime.createDockerClients();
 
   const results: DockerHostHealth[] = await Promise.all(
     clients.map(async ({ host, docker }): Promise<DockerHostHealth> => {
@@ -56,10 +91,10 @@ router.get("/docker/scan/stream", async (req, res) => {
   let count = 0;
 
   try {
-    for (const { host, docker } of dockerService.createDockerClients()) {
+    for (const { host, docker } of dockerRuntime.createDockerClients()) {
       if (closed) break;
 
-      for await (const service of dockerService.scanDockerContainers(docker, host)) {
+      for await (const service of dockerRuntime.scanDockerContainers(docker, host)) {
         if (closed) break;
 
         res.write(`data: ${JSON.stringify(service)}\n\n`);

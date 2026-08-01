@@ -4,9 +4,10 @@ import { type TerminalInputRequest, terminalInputRequestSchema } from "@shared/r
 import type { ApiSuccess, SseTerminalSessionPayload } from "@shared/responseSchemas.js";
 import { SSE_EVENT } from "@shared/types.js";
 
+import { serviceRepository } from "../db/serviceRepository.js";
 import { config } from "../lib/config.js";
 import { validateBody } from "../middleware/validateRequest.js";
-import { dockerService } from "../services/dockerService.js";
+import { containerRuntimeService } from "../services/containerRuntime/containerRuntimeService.js";
 import { terminalService } from "../services/terminalService.js";
 
 const router = Router();
@@ -31,13 +32,10 @@ router.get("/services/:id/terminal/stream", async (req, res) => {
   });
 
   try {
-    const container = dockerService.getContainerForServiceId(req.params.id);
-    const { sessionId, stream } = await terminalService.openSession(
-      req.sessionID,
-      container,
-      cols,
-      rows,
-    );
+    const service = serviceRepository.requireService(req.params.id);
+    const { sessionId, stream } = await containerRuntimeService
+      .getRuntime(service)
+      .openTerminal(req.sessionID, service, cols, rows);
 
     // Guard so closeSession is only ever called once regardless of which event fires first
     let sessionClosed = false;

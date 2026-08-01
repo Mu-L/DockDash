@@ -1,4 +1,4 @@
-import { DOCKER_STREAM_HEADER_SIZE } from "@server/services/dockerService.js";
+import { DOCKER_STREAM_HEADER_SIZE } from "@server/services/containerRuntime/dockerRuntime.js";
 import { fileService } from "@server/services/fileService.js";
 import { PassThrough, Readable } from "stream";
 import { beforeEach, describe, expect, it, vi } from "vitest";

@@ -11,6 +11,13 @@ export const serviceMetadataResponseSchema = z
     dockerHostId: z.string().optional(),
     containerId: z.string().optional(),
     containerName: z.string().optional(),
+    clusterId: z.string().optional(),
+    kubernetesContext: z.string().optional(),
+    namespace: z.string().optional(),
+    podUid: z.string().optional(),
+    podName: z.string().optional(),
+    workloadKind: z.string().optional(),
+    workloadName: z.string().optional(),
     networkNames: z.array(z.string()).optional(),
     image: z.string().optional(),
     imageTag: z.string().optional(),
@@ -110,6 +117,18 @@ export const dockerHostHealthResponseSchema = z.array(
     .strip(),
 );
 
+export const kubernetesClusterHealthResponseSchema = z.array(
+  z
+    .object({
+      context: z.string(),
+      connected: z.boolean(),
+      namespaces: z.number().int().optional(),
+      pods: z.number().int().optional(),
+      error: z.string().optional(),
+    })
+    .strip(),
+);
+
 export const sseScanDoneResponseSchema = z
   .object({ count: z.number().int().nonnegative() })
   .strip();
@@ -182,6 +201,9 @@ export const dashboardConfigResponseSchema = z
     version: z.string(),
     appriseConfigured: z.boolean(),
     dockerHosts: z.array(z.string()),
+    kubernetesEnabled: z.string(),
+    kubernetesContexts: z.array(z.string()),
+    kubernetesNamespaces: z.array(z.string()),
     networkCidrs: z.array(z.string()),
     healthCheckInterval: z.number(),
     resourceMonitorInterval: z.number(),
@@ -228,6 +250,7 @@ export type CheckAllServicesResponse = z.infer<typeof checkAllServicesResponseSc
 export type ContainerStats = z.infer<typeof containerStatsResponseSchema>;
 export type DashboardConfig = z.infer<typeof dashboardConfigResponseSchema>;
 export type DockerHostHealth = z.infer<typeof dockerHostHealthResponseSchema>[number];
+export type KubernetesClusterHealth = z.infer<typeof kubernetesClusterHealthResponseSchema>[number];
 export type FileContentResponse = z.infer<typeof fileContentResponseSchema>;
 export type FilesResponse = z.infer<typeof filesResponseSchema>;
 export type FileEntry = FilesResponse["entries"][number];

@@ -7,7 +7,7 @@ import type { ChangelogRelease, ChangelogResponse } from "@shared";
 import { config } from "../lib/config.js";
 import { logger } from "../lib/logService.js";
 import { TagParser } from "../lib/tagParser.js";
-import { dockerService } from "./dockerService.js";
+import { dockerRuntime } from "./containerRuntime/dockerRuntime.js";
 
 const GITHUB_API = "https://api.github.com";
 const OCI_SOURCE_LABEL = "org.opencontainers.image.source";
@@ -23,12 +23,12 @@ export class ChangelogService {
   private async resolveGithubRepo(service: Service): Promise<string | null> {
     // 1. Try OCI label from running container
     const dockerHostId = service.metadata?.dockerHostId;
-    const resolvedHost = dockerHostId ? dockerService.resolveHost(dockerHostId) : undefined;
+    const resolvedHost = dockerHostId ? dockerRuntime.resolveHost(dockerHostId) : undefined;
     const containerId = service.metadata?.containerId;
 
     if (resolvedHost && containerId) {
       try {
-        const docker: Docker = dockerService.createDockerClientForHost(resolvedHost);
+        const docker: Docker = dockerRuntime.createDockerClientForHost(resolvedHost);
         const info = await docker.getContainer(containerId).inspect();
         const imageInfo = await docker.getImage(info.Image).inspect();
         const labels: Record<string, string> = imageInfo.Config?.Labels ?? {};

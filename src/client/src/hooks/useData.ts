@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type {
   DockerHostHealth,
+  KubernetesClusterHealth,
   Service,
   ServiceLink,
   ServicePosition,
@@ -84,6 +85,19 @@ export function useDockerHealth() {
   }, [check]);
 
   return { health, loading, refresh: check };
+}
+
+export function useKubernetesHealth() {
+  const [health, setHealth] = useState<KubernetesClusterHealth[] | null>(null);
+
+  useEffect(() => {
+    discoveryApi
+      .kubernetesHealth()
+      .then((res) => setHealth(res.data))
+      .catch(() => setHealth([]));
+  }, []);
+
+  return { health };
 }
 
 export function useServices() {

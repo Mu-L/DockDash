@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { Service } from "@shared";
-import { ServiceSource, ServiceStatus } from "@shared";
+import { isContainerService, ServiceSource, ServiceStatus } from "@shared";
 import type { UpdateServiceRequest } from "@shared/requestSchemas.js";
 
 import { Icons } from "@/components/Icons";
@@ -274,7 +274,21 @@ export default function Services() {
             </thead>
             <tbody>
               {visible.map((service) => {
-                const isDocker = service.source === ServiceSource.DOCKER;
+                const isContainer = isContainerService(service);
+                const sourcePresentation = {
+                  [ServiceSource.DOCKER]: {
+                    icon: <Icons.Docker size={12} />,
+                    label: t("services.sourceDocker"),
+                  },
+                  [ServiceSource.KUBERNETES]: {
+                    icon: <Icons.Server size={12} />,
+                    label: "Kubernetes",
+                  },
+                  [ServiceSource.NETWORK]: {
+                    icon: <Icons.Globe size={12} />,
+                    label: t("services.sourceNetwork"),
+                  },
+                }[service.source];
                 const imageTag = service.metadata?.imageTag;
                 const hasUpdate = service.metadata?.hasUpdate;
                 const latestVersion = service.metadata?.latestVersion;
@@ -290,8 +304,8 @@ export default function Services() {
                   >
                     <td className="px-4 py-3">
                       <span className="inline-flex items-center gap-1.5 px-[6px] py-px rounded text-[0.65rem] bg-warning/10 text-warning">
-                        {isDocker ? <Icons.Docker size={12} /> : <Icons.Globe size={12} />}
-                        {isDocker ? t("services.sourceDocker") : t("services.sourceNetwork")}
+                        {sourcePresentation.icon}
+                        {sourcePresentation.label}
                       </span>
                     </td>
                     <td className="px-4 py-3 font-medium text-foreground">{service.name}</td>
@@ -323,7 +337,7 @@ export default function Services() {
                     </td>
                     {resourceMonitorEnabled && (
                       <td className="px-4 py-3 w-36">
-                        {isDocker && (
+                        {isContainer && (
                           <MiniResourceBar
                             cpuPercent={service.cpuPercent}
                             memoryPercent={service.memoryPercent}

@@ -31,8 +31,8 @@ vi.mock("@server/db/serviceRepository.js", () => ({
   serviceRepository: { getService: vi.fn() },
 }));
 
-const { DockerService, DOCKER_STREAM_HEADER_SIZE } =
-  await import("@server/services/dockerService.js");
+const { DockerRuntime, DOCKER_STREAM_HEADER_SIZE } =
+  await import("@server/services/containerRuntime/dockerRuntime.js");
 
 // ── Fixtures ──
 
@@ -64,7 +64,7 @@ const IMAGE_INSPECT = {
 
 // ── Tests ──
 
-describe("DockerService.parseImage (via scanDockerContainers)", () => {
+describe("DockerRuntime.parseImage (via scanDockerContainers)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.DOCKER_HOSTS = "tcp://test-docker:2375";
@@ -82,7 +82,7 @@ describe("DockerService.parseImage (via scanDockerContainers)", () => {
   it("scanDockerContainers yields one service per container with correct fields", async () => {
     mockDocker.listContainers.mockResolvedValue(CONTAINER_LIST);
 
-    const svc = new DockerService();
+    const svc = new DockerRuntime();
     const results: unknown[] = [];
 
     for await (const service of svc.scanDockerContainers(
@@ -106,7 +106,7 @@ describe("DockerService.parseImage (via scanDockerContainers)", () => {
   it("deduplicates IPv4/IPv6 port bindings — only one entry per PrivatePort", async () => {
     mockDocker.listContainers.mockResolvedValue(CONTAINER_LIST);
 
-    const svc = new DockerService();
+    const svc = new DockerRuntime();
     const results: unknown[] = [];
 
     for await (const service of svc.scanDockerContainers(
@@ -127,7 +127,7 @@ describe("DockerService.parseImage (via scanDockerContainers)", () => {
       { ...CONTAINER_LIST[0], Names: ["/prefix/my-app"] },
     ]);
 
-    const svc = new DockerService();
+    const svc = new DockerRuntime();
     const results: unknown[] = [];
 
     for await (const service of svc.scanDockerContainers(
@@ -146,7 +146,7 @@ describe("DockerService.parseImage (via scanDockerContainers)", () => {
     mockDocker.listContainers.mockResolvedValue([{ ...CONTAINER_LIST[0], State: "exited" }]);
     mockContainerObj.inspect.mockResolvedValue({ ...INSPECT_RESULT, State: { Status: "exited" } });
 
-    const svc = new DockerService();
+    const svc = new DockerRuntime();
     const results: unknown[] = [];
 
     for await (const service of svc.scanDockerContainers(
@@ -160,7 +160,7 @@ describe("DockerService.parseImage (via scanDockerContainers)", () => {
   });
 });
 
-describe("DockerService.getContainersStateMap", () => {
+describe("DockerRuntime.getContainersStateMap", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.DOCKER_HOSTS = "tcp://test-docker:2375";
@@ -177,7 +177,7 @@ describe("DockerService.getContainersStateMap", () => {
       { ...CONTAINER_LIST[0], State: "running", Names: ["/app", "/alias"] },
     ]);
 
-    const svc = new DockerService();
+    const svc = new DockerRuntime();
     const map = await svc.getContainersStateMap(mockDocker as never);
 
     expect(map.has("app")).toBe(true);
@@ -188,35 +188,35 @@ describe("DockerService.getContainersStateMap", () => {
   it("includes the image digest when available", async () => {
     mockDocker.listContainers.mockResolvedValue(CONTAINER_LIST);
 
-    const svc = new DockerService();
+    const svc = new DockerRuntime();
     const map = await svc.getContainersStateMap(mockDocker as never);
 
     expect(map.get("my-app")?.imageDigest).toBe("sha256:digestabc");
   });
 });
 
-describe("DockerService.hostId", () => {
+describe("DockerRuntime.hostId", () => {
   it("returns a 16-character hex string", () => {
-    const id = DockerService.hostId("tcp://docker-host:2375");
+    const id = DockerRuntime.hostId("tcp://docker-host:2375");
 
     expect(id).toHaveLength(16);
     expect(id).toMatch(/^[0-9a-f]+$/);
   });
 
   it("is deterministic for the same input", () => {
-    expect(DockerService.hostId("unix:///var/run/docker.sock")).toBe(
-      DockerService.hostId("unix:///var/run/docker.sock"),
+    expect(DockerRuntime.hostId("unix:///var/run/docker.sock")).toBe(
+      DockerRuntime.hostId("unix:///var/run/docker.sock"),
     );
   });
 
   it("produces different IDs for different hosts", () => {
-    expect(DockerService.hostId("tcp://host-a:2375")).not.toBe(
-      DockerService.hostId("tcp://host-b:2375"),
+    expect(DockerRuntime.hostId("tcp://host-a:2375")).not.toBe(
+      DockerRuntime.hostId("tcp://host-b:2375"),
     );
   });
 });
 
-describe("DockerService.getContainerStats", () => {
+describe("DockerRuntime.getContainerStats", () => {
   const BASE_RAW = {
     cpu_stats: {
       cpu_usage: { total_usage: 1_000_000, percpu_usage: [500_000, 500_000] },
@@ -253,7 +253,7 @@ describe("DockerService.getContainerStats", () => {
 
   it("calculates CPU percent normalised to 0-100% of total CPU budget", async () => {
     // cpu_delta = 100_000, system_delta = 1_000_000 → 10.0%
-    const svc = new DockerService();
+    const svc = new DockerRuntime();
     const result = await svc.getContainerStats(mockContainerObj as never);
 
     expect(result.cpuPercent).toBe(10.0);
@@ -266,7 +266,7 @@ describe("DockerService.getContainerStats", () => {
       precpu_stats: { cpu_usage: { total_usage: 900_000 }, system_cpu_usage: 5_000_000 },
     });
 
-    const svc = new DockerService();
+    const svc = new DockerRuntime();
     const result = await svc.getContainerStats(mockContainerObj as never);
 
     expect(result.cpuPercent).toBe(0);
@@ -286,7 +286,7 @@ describe("DockerService.getContainerStats", () => {
       },
     });
 
-    const svc = new DockerService();
+    const svc = new DockerRuntime();
     const result = await svc.getContainerStats(mockContainerObj as never);
 
     expect(result.cpuPercent).toBeLessThanOrEqual(100);
@@ -306,7 +306,7 @@ describe("DockerService.getContainerStats", () => {
       },
     });
 
-    const svc = new DockerService();
+    const svc = new DockerRuntime();
     const result = await svc.getContainerStats(mockContainerObj as never);
 
     // cpu_delta=100k, system_delta=1M → 10.0%
@@ -316,7 +316,7 @@ describe("DockerService.getContainerStats", () => {
   // Memory
 
   it("subtracts cgroup v1 cache from memory usage and computes memoryPercent", async () => {
-    const svc = new DockerService();
+    const svc = new DockerRuntime();
     const result = await svc.getContainerStats(mockContainerObj as never);
 
     expect(result.memoryUsed).toBe(140_000_000); // 150M - 10M cache
@@ -334,7 +334,7 @@ describe("DockerService.getContainerStats", () => {
       },
     });
 
-    const svc = new DockerService();
+    const svc = new DockerRuntime();
     const result = await svc.getContainerStats(mockContainerObj as never);
 
     expect(result.memoryUsed).toBe(130_000_000); // 150M - 20M inactive_file
@@ -347,7 +347,7 @@ describe("DockerService.getContainerStats", () => {
       memory_stats: { usage: 100_000_000, limit: 0, stats: {} },
     });
 
-    const svc = new DockerService();
+    const svc = new DockerRuntime();
     const result = await svc.getContainerStats(mockContainerObj as never);
 
     expect(result.memoryPercent).toBe(0);
@@ -356,7 +356,7 @@ describe("DockerService.getContainerStats", () => {
   // Network and disk
 
   it("sums rx_bytes and tx_bytes across all network interfaces", async () => {
-    const svc = new DockerService();
+    const svc = new DockerRuntime();
     const result = await svc.getContainerStats(mockContainerObj as never);
 
     expect(result.networkRx).toBe(3_000_000); // eth0 + eth1
@@ -366,7 +366,7 @@ describe("DockerService.getContainerStats", () => {
   it("returns zero network totals when networks is absent", async () => {
     mockContainerObj.stats.mockResolvedValue({ ...BASE_RAW, networks: undefined });
 
-    const svc = new DockerService();
+    const svc = new DockerRuntime();
     const result = await svc.getContainerStats(mockContainerObj as never);
 
     expect(result.networkRx).toBe(0);
@@ -387,7 +387,7 @@ describe("DockerService.getContainerStats", () => {
       },
     });
 
-    const svc = new DockerService();
+    const svc = new DockerRuntime();
     const result = await svc.getContainerStats(mockContainerObj as never);
 
     expect(result.blockRead).toBe(500_000);
@@ -400,7 +400,7 @@ describe("DockerService.getContainerStats", () => {
       blkio_stats: { io_service_bytes_recursive: null },
     });
 
-    const svc = new DockerService();
+    const svc = new DockerRuntime();
     const result = await svc.getContainerStats(mockContainerObj as never);
 
     expect(result.blockRead).toBe(0);
@@ -414,7 +414,7 @@ describe("DockerService.getContainerStats", () => {
       memory_stats: {},
     });
 
-    const svc = new DockerService();
+    const svc = new DockerRuntime();
     const result = await svc.getContainerStats(mockContainerObj as never);
 
     expect(result).toMatchObject({
@@ -434,7 +434,7 @@ describe("DockerService.getContainerStats", () => {
     mockContainerObj.stats.mockReturnValue(new Promise(() => {}));
 
     try {
-      const svc = new DockerService();
+      const svc = new DockerRuntime();
       const result = svc.getContainerStats(mockContainerObj as never);
       const rejection = expect(result).rejects.toThrow("stats timeout");
 
@@ -446,7 +446,7 @@ describe("DockerService.getContainerStats", () => {
   });
 });
 
-describe("DockerService.openLogStream — multiplexed (non-TTY) demux", () => {
+describe("DockerRuntime.openLogStream — multiplexed (non-TTY) demux", () => {
   function makeFrame(type: number, payload: string): Buffer {
     const payloadBuf = Buffer.from(payload);
     const header = Buffer.alloc(DOCKER_STREAM_HEADER_SIZE);
@@ -475,7 +475,7 @@ describe("DockerService.openLogStream — multiplexed (non-TTY) demux", () => {
       },
     );
 
-    const svc = new DockerService();
+    const svc = new DockerRuntime();
     const output = await svc.openLogStream(mockContainerObj as never);
 
     const lines: string[] = [];
@@ -504,7 +504,7 @@ describe("DockerService.openLogStream — multiplexed (non-TTY) demux", () => {
       },
     );
 
-    const svc = new DockerService();
+    const svc = new DockerRuntime();
     const output = await svc.openLogStream(mockContainerObj as never);
 
     const lines: string[] = [];
@@ -533,7 +533,7 @@ describe("DockerService.openLogStream — multiplexed (non-TTY) demux", () => {
       },
     );
 
-    const svc = new DockerService();
+    const svc = new DockerRuntime();
     const output = await svc.openLogStream(mockContainerObj as never);
     let result = "";
 
@@ -553,7 +553,7 @@ describe("DockerService.openLogStream — multiplexed (non-TTY) demux", () => {
         cb(new Error("logs unavailable")),
     );
 
-    const svc = new DockerService();
+    const svc = new DockerRuntime();
     const output = await svc.openLogStream(mockContainerObj as never);
     const error = await new Promise<Error>((resolve) => output.once("error", resolve));
 
@@ -569,7 +569,7 @@ describe("DockerService.openLogStream — multiplexed (non-TTY) demux", () => {
       (_opts: unknown, cb: (err: null, stream: PassThrough) => void) => cb(null, dockerStream),
     );
 
-    const svc = new DockerService();
+    const svc = new DockerRuntime();
     const output = await svc.openLogStream(mockContainerObj as never);
 
     const closed = new Promise<void>((resolve) => output.once("close", resolve));
@@ -586,7 +586,7 @@ describe("DockerService.openLogStream — multiplexed (non-TTY) demux", () => {
       (_opts: unknown, cb: (err: null, stream: PassThrough) => void) => cb(null, new PassThrough()),
     );
 
-    const svc = new DockerService();
+    const svc = new DockerRuntime();
     const first = await svc.openLogStream(mockContainerObj as never);
     const second = await svc.openLogStream(mockContainerObj as never);
     const firstDestroy = vi.spyOn(first, "destroy");

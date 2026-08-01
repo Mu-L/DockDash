@@ -21,7 +21,9 @@ const mockDockerService = vi.hoisted(() => ({
 }));
 
 vi.mock("axios", () => ({ default: mockAxios }));
-vi.mock("@server/services/dockerService.js", () => ({ dockerService: mockDockerService }));
+vi.mock("@server/services/containerRuntime/dockerRuntime.js", () => ({
+  dockerRuntime: mockDockerService,
+}));
 
 const { changelogService } = await import("@server/services/changelogService.js");
 

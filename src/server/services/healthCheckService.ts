@@ -16,8 +16,9 @@ import {
   type ContainerStateMap,
   DOCKER_CONTAINER_DOWN_STATES,
   DOCKER_CONTAINER_STATE,
-  dockerService,
-} from "./dockerService.js";
+  dockerRuntime,
+} from "./containerRuntime/dockerRuntime.js";
+import { kubernetesRuntime } from "./kubernetesRuntime.js";
 import { notificationService } from "./notificationService.js";
 
 const HTTP_TIMEOUT = 1000;
@@ -32,7 +33,7 @@ export class HealthCheckService extends ConcurrentService {
     stateMap?: ContainerStateMap | null,
   ): Promise<ServiceStatus | null> {
     const dockerHostId = service.metadata?.dockerHostId;
-    const resolvedHost = dockerHostId ? dockerService.resolveHost(dockerHostId) : undefined;
+    const resolvedHost = dockerHostId ? dockerRuntime.resolveHost(dockerHostId) : undefined;
     const containerName = service.metadata?.containerName;
 
     try {
@@ -43,8 +44,8 @@ export class HealthCheckService extends ConcurrentService {
       } else {
         const map =
           stateMap ??
-          (await dockerService.getContainersStateMap(
-            dockerService.createDockerClientForHost(resolvedHost),
+          (await dockerRuntime.getContainersStateMap(
+            dockerRuntime.createDockerClientForHost(resolvedHost),
           ));
         const containerInfo = map.get(containerName);
 
@@ -110,7 +111,9 @@ export class HealthCheckService extends ConcurrentService {
     const status =
       service.source === ServiceSource.DOCKER
         ? await this.checkSingleDockerService(service)
-        : await this.checkSingleNetworkService(service);
+        : service.source === ServiceSource.KUBERNETES
+          ? await kubernetesRuntime.status(service).catch(() => ServiceStatus.UNKNOWN)
+          : await this.checkSingleNetworkService(service);
 
     if (status !== null) this.commitStatus(service, status);
 
@@ -128,7 +131,7 @@ export class HealthCheckService extends ConcurrentService {
       .filter((s) => s.source === ServiceSource.DOCKER)
       .reduce((map, service) => {
         const dockerHostId = service.metadata?.dockerHostId;
-        const resolvedHost = dockerHostId ? dockerService.resolveHost(dockerHostId) : undefined;
+        const resolvedHost = dockerHostId ? dockerRuntime.resolveHost(dockerHostId) : undefined;
 
         if (resolvedHost && dockerHostId) map.set(dockerHostId, resolvedHost);
 
@@ -139,8 +142,8 @@ export class HealthCheckService extends ConcurrentService {
       [...hostById],
       async ([dockerHostId, resolvedHost]): Promise<[string, ContainerStateMap | null]> => {
         try {
-          const stateMap = await dockerService.getContainersStateMap(
-            dockerService.createDockerClientForHost(resolvedHost),
+          const stateMap = await dockerRuntime.getContainersStateMap(
+            dockerRuntime.createDockerClientForHost(resolvedHost),
           );
 
           return [dockerHostId, stateMap];
@@ -166,6 +169,8 @@ export class HealthCheckService extends ConcurrentService {
           service,
           dockerHostId ? stateMapByHostId.get(dockerHostId) : undefined,
         );
+      } else if (service.source === ServiceSource.KUBERNETES) {
+        status = await kubernetesRuntime.status(service).catch(() => ServiceStatus.UNKNOWN);
       } else {
         status = await this.checkSingleNetworkService(service);
       }

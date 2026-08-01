@@ -18,10 +18,24 @@ const mockDockerService = vi.hoisted(() => ({
   getContainerForServiceId: vi.fn(),
   getContainerStats: vi.fn(),
   openLogStream: vi.fn(),
+  action: vi.fn(async (_service, action) => {
+    const container = mockDockerService.getContainerForServiceId("svc-1");
+
+    await container[action]();
+  }),
+  stats: vi.fn(() =>
+    mockDockerService.getContainerStats(mockDockerService.getContainerForServiceId("svc-1")),
+  ),
+  logs: vi.fn(() =>
+    mockDockerService.openLogStream(mockDockerService.getContainerForServiceId("svc-1")),
+  ),
 }));
 
 const mockHealthCheckService = vi.hoisted(() => ({
   checkSingleService: vi.fn(),
+}));
+const mockServiceRepository = vi.hoisted(() => ({
+  requireService: vi.fn((id: string) => ({ id, source: "docker" })),
 }));
 
 const mockLogger = vi.hoisted(() => ({
@@ -32,8 +46,9 @@ const mockLogger = vi.hoisted(() => ({
 }));
 
 vi.mock("@server/lib/config.js", () => ({ config: mockConfig }));
-vi.mock("@server/services/dockerService.js", () => ({
-  dockerService: mockDockerService,
+vi.mock("@server/db/serviceRepository.js", () => ({ serviceRepository: mockServiceRepository }));
+vi.mock("@server/services/containerRuntime/dockerRuntime.js", () => ({
+  dockerRuntime: mockDockerService,
 }));
 vi.mock("@server/services/healthCheckService.js", () => ({
   healthCheckService: mockHealthCheckService,

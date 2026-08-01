@@ -46,6 +46,17 @@ describe("saveService / getService", () => {
     expect(retrieved).toMatchObject({ name: "web-app", host: "192.168.1.10" });
   });
 
+  it("requires an existing service and rejects a missing ID", () => {
+    const saved = svcRepo.saveService({
+      name: "required",
+      host: "host",
+      source: ServiceSource.NETWORK,
+    });
+
+    expect(svcRepo.requireService(saved.id!)).toMatchObject({ id: saved.id, name: "required" });
+    expect(() => svcRepo.requireService("missing")).toThrow("Service not found");
+  });
+
   it("returns undefined for a non-existent ID", () => {
     expect(svcRepo.getService("does-not-exist")).toBeUndefined();
   });

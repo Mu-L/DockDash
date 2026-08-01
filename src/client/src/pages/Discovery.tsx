@@ -13,7 +13,7 @@ import { Switch } from "@/components/ui/Switch";
 import { cn } from "@/lib/utils";
 
 import { useConfig } from "../context/ConfigContext";
-import { useDiscovery, useDockerHealth } from "../hooks/useData";
+import { useDiscovery, useDockerHealth, useKubernetesHealth } from "../hooks/useData";
 import { startScanStream } from "../services/scanStream";
 
 function StatusDot({ status }: { status: string }) {
@@ -48,17 +48,21 @@ export default function Discovery() {
   const { t } = useTranslation();
   const { services, refresh, importService } = useDiscovery();
   const { health } = useDockerHealth();
+  const { health: kubernetesHealth } = useKubernetesHealth();
   const appConfig = useConfig();
 
   const [scanningDocker, setScanningDocker] = useState(false);
   const [scanningNetwork, setScanningNetwork] = useState(false);
+  const [scanningKubernetes, setScanningKubernetes] = useState(false);
   const [dockerResults, setDockerResults] = useState<Service[]>([]);
   const [networkResults, setNetworkResults] = useState<Service[]>([]);
+  const [kubernetesResults, setKubernetesResults] = useState<Service[]>([]);
   const [cidrs, setCidrs] = useState<string[]>([]);
   const [deepScan, setDeepScan] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const dockerScanRef = useRef<EventSource | null>(null);
   const networkScanRef = useRef<EventSource | null>(null);
+  const kubernetesScanRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
     if (appConfig) setCidrs(appConfig.networkCidrs);
@@ -68,6 +72,7 @@ export default function Discovery() {
     return () => {
       dockerScanRef.current?.close();
       networkScanRef.current?.close();
+      kubernetesScanRef.current?.close();
     };
   }, []);
 
@@ -116,6 +121,23 @@ export default function Discovery() {
     });
   };
 
+  const handleKubernetesScan = () => {
+    setScanningKubernetes(true);
+    setKubernetesResults([]);
+    kubernetesScanRef.current = startScanStream({
+      url: "/api/kubernetes/scan/stream",
+      onService: (svc) => setKubernetesResults((prev) => [...prev, svc]),
+      onDone: (count) => {
+        setScanningKubernetes(false);
+        showToast(`Discovered ${count} Kubernetes containers`);
+      },
+      onError: (message) => {
+        setScanningKubernetes(false);
+        showToast(`Kubernetes scan failed: ${message}`);
+      },
+    });
+  };
+
   const validateCidr = (value: string, existing: string[]) => {
     const parts = value.split("/");
 
@@ -144,6 +166,9 @@ export default function Discovery() {
   };
 
   const availableDocker = dockerResults.filter((s) => !services.some((e) => Service.equals(s, e)));
+  const availableKubernetes = kubernetesResults.filter(
+    (s) => !services.some((e) => Service.equals(s, e)),
+  );
   const availableNetwork = networkResults.filter(
     (s) => !services.some((e) => Service.equals(s, e)),
   );
@@ -287,6 +312,75 @@ export default function Discovery() {
           )}
         </CardContent>
       </Card>
+
+      {appConfig?.kubernetesEnabled === "true" && (
+        <Card className="mb-5">
+          <CardContent className="p-6">
+            <h2 className="text-lg font-semibold mb-1 text-foreground flex items-center gap-2">
+              <Icons.Server size={18} /> Kubernetes Container Scan
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Scan regular pod containers in the configured namespaces.
+            </p>
+            <div className="mb-3 flex flex-col items-start gap-1">
+              {kubernetesHealth?.map((item) => (
+                <StatusBadge key={item.context} ok={item.connected}>
+                  {item.context} — {item.connected ? `${item.pods ?? 0} pods` : item.error}
+                </StatusBadge>
+              ))}
+            </div>
+            <Button
+              onClick={handleKubernetesScan}
+              disabled={scanningKubernetes || !kubernetesHealth?.some((item) => item.connected)}
+            >
+              <Icons.Scan size={14} />
+              {scanningKubernetes ? "Scanning..." : "Scan Kubernetes"}
+            </Button>
+            {kubernetesResults.length > 0 && (
+              <div className="mt-4 flex flex-col gap-2">
+                {kubernetesResults.map((svc) => {
+                  const imported = !availableKubernetes.includes(svc);
+
+                  return (
+                    <div
+                      key={svc.id}
+                      className="flex items-center justify-between px-4 py-3 bg-background border border-border rounded-lg"
+                    >
+                      <div>
+                        <div className="text-sm font-medium">
+                          <StatusDot status={svc.status} /> {svc.name}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {svc.metadata?.kubernetesContext} · {svc.metadata?.namespace} ·{" "}
+                          {svc.metadata?.podName}
+                        </div>
+                      </div>
+                      {imported ? (
+                        <span className="text-xs text-success">Monitored</span>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          onClick={() =>
+                            importService({
+                              name: svc.name,
+                              host: svc.host,
+                              ports: svc.ports,
+                              source: ServiceSource.KUBERNETES,
+                              metadata: svc.metadata,
+                            })
+                          }
+                        >
+                          <Icons.Plus size={14} /> Import
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="mb-5">
         <CardContent className="p-6">

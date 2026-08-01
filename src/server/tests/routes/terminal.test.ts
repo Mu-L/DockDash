@@ -4,16 +4,27 @@ import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockConfig = vi.hoisted(() => ({ terminalEnabled: true }));
-const mockDockerService = vi.hoisted(() => ({ getContainerForServiceId: vi.fn() }));
+const mockDockerService = vi.hoisted(() => ({
+  getContainerForServiceId: vi.fn(),
+  openTerminal: vi.fn((owner, _service, cols, rows) =>
+    mockTerminalService.openSession(owner, {}, cols, rows),
+  ),
+}));
 const mockTerminalService = vi.hoisted(() => ({
   openSession: vi.fn(),
   closeSession: vi.fn(),
   touch: vi.fn(),
   getSession: vi.fn(),
 }));
+const mockServiceRepository = vi.hoisted(() => ({
+  requireService: vi.fn((id: string) => ({ id, source: "docker" })),
+}));
 
 vi.mock("@server/lib/config.js", () => ({ config: mockConfig }));
-vi.mock("@server/services/dockerService.js", () => ({ dockerService: mockDockerService }));
+vi.mock("@server/db/serviceRepository.js", () => ({ serviceRepository: mockServiceRepository }));
+vi.mock("@server/services/containerRuntime/dockerRuntime.js", () => ({
+  dockerRuntime: mockDockerService,
+}));
 vi.mock("@server/services/terminalService.js", () => ({ terminalService: mockTerminalService }));
 
 const { default: terminalRouter } = await import("@server/routes/terminal.js");

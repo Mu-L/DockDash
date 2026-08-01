@@ -8,11 +8,11 @@ import { ServiceSource, ServiceStatus } from "@shared";
 
 import { overrideConnection, sqlite } from "../../db/connection.js";
 import { serviceRepository } from "../../db/serviceRepository.js";
-import { DockerService } from "../dockerService.js";
-import { MOCK_CONTAINER_IDS, MOCK_CONTAINERS } from "./mockDockerService.js";
+import { DockerRuntime } from "../containerRuntime/dockerRuntime.js";
+import { MOCK_CONTAINER_IDS, MOCK_CONTAINERS } from "./mockDockerRuntime.js";
 
 const MOCK_HOST = "unix:///var/run/docker.sock";
-const MOCK_HOST_ID = DockerService.hostId(MOCK_HOST);
+const MOCK_HOST_ID = DockerRuntime.hostId(MOCK_HOST);
 
 function vary(base: number, variance: number, timeMs: number, phase: number): number {
   const trend = Math.sin(timeMs / (4 * 60 * 60_000) + phase) * (variance * 0.3);

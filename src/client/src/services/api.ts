@@ -25,6 +25,7 @@ import {
   fileContentResponseSchema,
   filesResponseSchema,
   healthHistoryResponseSchema,
+  kubernetesClusterHealthResponseSchema,
   resourceHistoryResponseSchema,
   savePositionsResponseSchema,
   serviceLinkResponseSchema,
@@ -59,6 +60,8 @@ async function validated<T>(
 // Discovery APIs
 export const discoveryApi = {
   dockerHealth: () => validated(api.get("/docker/health"), dockerHostHealthResponseSchema),
+  kubernetesHealth: () =>
+    validated(api.get("/kubernetes/health"), kubernetesClusterHealthResponseSchema),
   testNotification: () => validated(api.post("/notifications/test"), apiSuccessResponseSchema),
   checkAppUpdate: () => validated(api.get("/app-update"), appUpdateResponseSchema),
 };

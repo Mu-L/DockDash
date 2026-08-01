@@ -1,6 +1,6 @@
 import type { MouseEvent as ReactMouseEvent } from "react";
 
-import { Service, ServiceSource, ServiceStatus } from "@shared";
+import { isContainerService, Service, ServiceStatus } from "@shared";
 
 import { Icons } from "@/components/Icons";
 import { PortTag } from "@/components/PortTag";
@@ -274,7 +274,7 @@ export function ServiceNode({
 
         <div className="bg-card rounded-[10px] px-3 py-2.5">
           <div className="text-[0.85rem] font-semibold text-foreground flex items-center gap-1.5 overflow-hidden">
-            {service.source === ServiceSource.DOCKER ? (
+            {isContainerService(service) ? (
               <Icons.Docker size={14} className="text-muted-foreground" />
             ) : (
               <Icons.Globe size={14} className="text-muted-foreground" />
@@ -284,7 +284,7 @@ export function ServiceNode({
             </span>
           </div>
 
-          {service.source === ServiceSource.DOCKER && service.metadata?.imageTag && (
+          {isContainerService(service) && service.metadata?.imageTag && (
             <div className="flex items-center gap-1 mt-1 flex-wrap">
               <span className="inline-block px-[5px] py-px bg-accent-purple/10 text-accent-purple rounded text-[0.6rem] font-mono shrink-0">
                 {service.metadata.imageTag as string}

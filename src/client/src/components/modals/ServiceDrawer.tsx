@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 
 import type { Service } from "@shared";
-import { ContainerAction, ServiceSource } from "@shared";
+import { ContainerAction, isContainerService } from "@shared";
 import type { UpdateServiceRequest } from "@shared/requestSchemas.js";
 
 import { Icons } from "@/components/Icons";
@@ -56,7 +56,7 @@ export function ServiceDrawer({
   const [logsReconnectTrigger, setLogsReconnectTrigger] = useState(0);
 
   const config = useConfig();
-  const isDocker = service.source === ServiceSource.DOCKER;
+  const isContainer = isContainerService(service);
 
   const handleContainerActionComplete = useCallback((action: ContainerAction) => {
     if (action === ContainerAction.START || action === ContainerAction.RESTART) {
@@ -71,11 +71,11 @@ export function ServiceDrawer({
 
   const tabs: Record<
     Tab,
-    { label: string; dockerOnly: boolean; enabled: boolean; content: ReactNode }
+    { label: string; containerOnly: boolean; enabled: boolean; content: ReactNode }
   > = {
     [Tab.DETAILS]: {
       label: t("drawer.tabs.details"),
-      dockerOnly: false,
+      containerOnly: false,
       enabled: true,
       content: (
         <ServiceDetails
@@ -89,32 +89,32 @@ export function ServiceDrawer({
     },
     [Tab.CHANGELOG]: {
       label: t("drawer.tabs.changelog"),
-      dockerOnly: true,
+      containerOnly: true,
       enabled: true,
       content: <Changelog serviceId={service.id!} />,
     },
     [Tab.LOGS]: {
       label: t("drawer.tabs.logs"),
-      dockerOnly: true,
+      containerOnly: true,
       enabled: true,
       content: <DockerLogs serviceId={service.id!} reconnectTrigger={logsReconnectTrigger} />,
     },
     [Tab.FILES]: {
       label: t("drawer.tabs.files"),
-      dockerOnly: true,
+      containerOnly: true,
       enabled: config?.fileExplorerEnabled ?? false,
       content: <FileExplorer serviceId={service.id!} />,
     },
     [Tab.TERMINAL]: {
       label: t("drawer.tabs.terminal"),
-      dockerOnly: true,
+      containerOnly: true,
       enabled: config?.terminalEnabled ?? false,
       content: <Terminal serviceId={service.id!} />,
     },
   };
 
   const visibleTabIds = (Object.values(Tab) as Tab[]).filter(
-    (id) => (!tabs[id].dockerOnly || isDocker) && tabs[id].enabled,
+    (id) => (!tabs[id].containerOnly || isContainer) && tabs[id].enabled,
   );
   const tab = visibleTabIds.includes(currentTab) ? currentTab : visibleTabIds[0];
 
@@ -151,7 +151,7 @@ export function ServiceDrawer({
         }}
       >
         <div className="border-b border-border relative">
-          {isDocker && config?.containerControlsEnabled && (
+          {isContainer && config?.containerControlsEnabled && (
             <div className="absolute top-0 right-15 flex">
               <ContainerControls
                 service={service}
@@ -160,7 +160,7 @@ export function ServiceDrawer({
             </div>
           )}
           <div className="flex items-start gap-2.5 px-5 pb-4 pt-3">
-            {isDocker ? (
+            {isContainer ? (
               <Icons.Docker size={18} className="text-muted-foreground mt-0.5 shrink-0" />
             ) : (
               <Icons.Globe size={18} className="text-muted-foreground mt-0.5 shrink-0" />

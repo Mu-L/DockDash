@@ -16,6 +16,7 @@ export enum ContainerAction {
 
 export enum ServiceSource {
   DOCKER = "docker",
+  KUBERNETES = "kubernetes",
   NETWORK = "network",
 }
 
@@ -58,6 +59,13 @@ export interface ServiceMetadata {
   dockerHostId?: string;
   containerId?: string;
   containerName?: string;
+  clusterId?: string;
+  kubernetesContext?: string;
+  namespace?: string;
+  podUid?: string;
+  podName?: string;
+  workloadKind?: string;
+  workloadName?: string;
   networkNames?: string[];
   image?: string;
   imageTag?: string;

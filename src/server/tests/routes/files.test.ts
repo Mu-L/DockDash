@@ -3,15 +3,26 @@ import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockConfig = vi.hoisted(() => ({ fileExplorerEnabled: true }));
-const mockDockerService = vi.hoisted(() => ({ getContainerForServiceId: vi.fn() }));
+const mockDockerService = vi.hoisted(() => ({
+  getContainerForServiceId: vi.fn(),
+  listFiles: vi.fn((_service, path) => mockFileService.listFiles({}, path)),
+  readFile: vi.fn((_service, path) => mockFileService.readFile({}, path)),
+  writeFile: vi.fn((_service, path, content) => mockFileService.writeFile({}, path, content)),
+}));
 const mockFileService = vi.hoisted(() => ({
   listFiles: vi.fn(),
   readFile: vi.fn(),
   writeFile: vi.fn(),
 }));
+const mockServiceRepository = vi.hoisted(() => ({
+  requireService: vi.fn((id: string) => ({ id, source: "docker" })),
+}));
 
 vi.mock("@server/lib/config.js", () => ({ config: mockConfig }));
-vi.mock("@server/services/dockerService.js", () => ({ dockerService: mockDockerService }));
+vi.mock("@server/db/serviceRepository.js", () => ({ serviceRepository: mockServiceRepository }));
+vi.mock("@server/services/containerRuntime/dockerRuntime.js", () => ({
+  dockerRuntime: mockDockerService,
+}));
 vi.mock("@server/services/fileService.js", () => ({ fileService: mockFileService }));
 
 const { default: filesRouter } = await import("@server/routes/files.js");

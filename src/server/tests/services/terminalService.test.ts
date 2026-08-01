@@ -91,4 +91,18 @@ describe("TerminalService", () => {
 
     endSpies.forEach((spy) => expect(spy).toHaveBeenCalled());
   });
+
+  it("registers a runtime-provided stream with session ownership", async () => {
+    const stream = new PassThrough();
+    const service = await freshService();
+
+    mockUuid.mockReturnValueOnce("registered");
+    expect(service.registerSession("owner", stream)).toEqual({
+      sessionId: "registered",
+      stream,
+    });
+    expect(service.getSession("owner", "registered")?.stream).toBe(stream);
+    expect(service.getSession("other", "registered")).toBeUndefined();
+    service.shutdown();
+  });
 });

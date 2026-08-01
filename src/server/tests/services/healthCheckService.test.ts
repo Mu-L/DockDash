@@ -61,8 +61,8 @@ vi.mock("@server/lib/config.js", () => ({ config: mockConfig }));
 vi.mock("@server/db/serviceRepository.js", () => ({ serviceRepository: mockDb }));
 vi.mock("@server/db/historyRepository.js", () => ({ historyRepository: mockDb }));
 
-vi.mock("@server/services/dockerService.js", () => ({
-  dockerService: mockDockerService,
+vi.mock("@server/services/containerRuntime/dockerRuntime.js", () => ({
+  dockerRuntime: mockDockerService,
   DOCKER_CONTAINER_STATE: {
     RUNNING: "running",
     EXITED: "exited",

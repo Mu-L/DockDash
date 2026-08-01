@@ -1,5 +1,5 @@
 import type { ContainerStats } from "@shared";
-import { Service, ServiceSource } from "@shared";
+import { Service } from "@shared";
 
 import { historyRepository } from "../db/historyRepository.js";
 import { serviceRepository } from "../db/serviceRepository.js";
@@ -7,7 +7,7 @@ import { t } from "../i18n/index.js";
 import { config } from "../lib/config.js";
 import { logger } from "../lib/logService.js";
 import { ConcurrentService } from "./ConcurrentService.js";
-import { dockerService } from "./dockerService.js";
+import { containerRuntimeService } from "./containerRuntime/containerRuntimeService.js";
 import { notificationService } from "./notificationService.js";
 
 export class ResourceStatsService extends ConcurrentService {
@@ -27,12 +27,11 @@ export class ResourceStatsService extends ConcurrentService {
 
     const services = serviceRepository
       .getServices()
-      .filter((s) => s.source === ServiceSource.DOCKER);
+      .filter((service) => containerRuntimeService.isContainer(service));
 
     await this.mapWithConcurrency(services, async (service) => {
       try {
-        const container = dockerService.getContainerForServiceId(service.id!);
-        const stats = await dockerService.getContainerStats(container);
+        const stats = await containerRuntimeService.getRuntime(service).stats(service);
 
         this.latestStats.set(service.id!, {
           cpuPercent: stats.cpuPercent,

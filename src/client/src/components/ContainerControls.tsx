@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { Service } from "@shared";
-import { ContainerAction, ServiceStatus } from "@shared";
+import { ContainerAction, ServiceStatus, supportsContainerStartStop } from "@shared";
 
 import { Icons } from "@/components/Icons";
 import { Button } from "@/components/ui/Button";
@@ -41,23 +41,27 @@ export function ContainerControls({ service, onActionComplete }: ContainerContro
   return (
     <div className="flex flex-col gap-1">
       <div className="flex gap-px">
-        <Button
-          variant="destructive"
-          onClick={() => handleAction(ContainerAction.STOP)}
-          disabled={activeAction !== null || service.status !== ServiceStatus.UP}
-          title={t("drawer.container.stop")}
-          className={tabClass}
-        >
-          <Icons.Stop size={13} />
-        </Button>
-        <Button
-          onClick={() => handleAction(ContainerAction.START)}
-          disabled={activeAction !== null || service.status !== ServiceStatus.DOWN}
-          title={t("drawer.container.start")}
-          className={`${tabClass} bg-success text-success-foreground hover:bg-success/90`}
-        >
-          <Icons.Play size={13} />
-        </Button>
+        {supportsContainerStartStop(service) && (
+          <Button
+            variant="destructive"
+            onClick={() => handleAction(ContainerAction.STOP)}
+            disabled={activeAction !== null || service.status !== ServiceStatus.UP}
+            title={t("drawer.container.stop")}
+            className={tabClass}
+          >
+            <Icons.Stop size={13} />
+          </Button>
+        )}
+        {supportsContainerStartStop(service) && (
+          <Button
+            onClick={() => handleAction(ContainerAction.START)}
+            disabled={activeAction !== null || service.status !== ServiceStatus.DOWN}
+            title={t("drawer.container.start")}
+            className={`${tabClass} bg-success text-success-foreground hover:bg-success/90`}
+          >
+            <Icons.Play size={13} />
+          </Button>
+        )}
         <Button
           onClick={() => handleAction(ContainerAction.RESTART)}
           disabled={activeAction !== null || service.status !== ServiceStatus.UP}

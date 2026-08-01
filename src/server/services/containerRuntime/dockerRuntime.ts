@@ -3,11 +3,14 @@ import Docker from "dockerode";
 import { PassThrough } from "stream";
 import { v4 as uuidv4 } from "uuid";
 
-import { ContainerStats, Service, ServiceSource, ServiceStatus } from "@shared";
+import { ContainerAction, ContainerStats, Service, ServiceSource, ServiceStatus } from "@shared";
+import type { FileContentResponse, FileEntry } from "@shared/responseSchemas.js";
 
-import { serviceRepository } from "../db/serviceRepository.js";
-import { config } from "../lib/config.js";
-import { DOCKER_LATEST_TAG } from "../lib/constants.js";
+import { config } from "../../lib/config.js";
+import { DOCKER_LATEST_TAG } from "../../lib/constants.js";
+import { fileService } from "../fileService.js";
+import { terminalService } from "../terminalService.js";
+import type { ContainerRuntime, RuntimeTerminalSession } from "./types.js";
 
 // Docker multiplexed stream header: 1 byte type + 3 bytes padding + 4 bytes payload length
 export const DOCKER_STREAM_HEADER_SIZE = 8;
@@ -32,7 +35,7 @@ export const DOCKER_CONTAINER_DOWN_STATES: string[] = [
   DOCKER_CONTAINER_STATE.STOPPED,
 ];
 
-export class DockerService {
+export class DockerRuntime implements ContainerRuntime {
   private readonly logStreams = new Set<PassThrough>();
   private readonly clients: Map<string, Docker>;
 
@@ -45,14 +48,10 @@ export class DockerService {
   }
 
   resolveHost(dockerHostId: string): string | undefined {
-    return config.dockerHosts.find((host) => DockerService.hostId(host) === dockerHostId);
+    return config.dockerHosts.find((host) => DockerRuntime.hostId(host) === dockerHostId);
   }
 
-  getContainerForServiceId(serviceId: string): Docker.Container {
-    const service = serviceRepository.getService(serviceId);
-
-    if (!service) throw new Error("Service not found");
-
+  getContainer(service: Service): Docker.Container {
     if (service.source !== ServiceSource.DOCKER) throw new Error("Not a Docker service");
 
     const dockerHostId = service.metadata?.dockerHostId as string | undefined;
@@ -135,7 +134,7 @@ export class DockerService {
               ? ServiceStatus.DOWN
               : ServiceStatus.UNKNOWN,
         metadata: {
-          dockerHostId: DockerService.hostId(dockerHost),
+          dockerHostId: DockerRuntime.hostId(dockerHost),
           containerId: container.Id,
           containerName: name,
           image,
@@ -326,6 +325,43 @@ export class DockerService {
     return output;
   }
 
+  async action(service: Service, action: ContainerAction): Promise<void> {
+    const container = this.getContainer(service);
+
+    if (action === ContainerAction.STOP) await container.stop();
+    else if (action === ContainerAction.START) await container.start();
+    else await container.restart();
+  }
+
+  stats(service: Service): Promise<ContainerStats> {
+    return this.getContainerStats(this.getContainer(service));
+  }
+
+  logs(service: Service): Promise<NodeJS.ReadableStream & { destroy: () => void }> {
+    return this.openLogStream(this.getContainer(service));
+  }
+
+  openTerminal(
+    userSessionId: string,
+    service: Service,
+    cols: number,
+    rows: number,
+  ): Promise<RuntimeTerminalSession> {
+    return terminalService.openSession(userSessionId, this.getContainer(service), cols, rows);
+  }
+
+  listFiles(service: Service, path: string): Promise<FileEntry[]> {
+    return fileService.listFiles(this.getContainer(service), path);
+  }
+
+  readFile(service: Service, path: string): Promise<FileContentResponse> {
+    return fileService.readFile(this.getContainer(service), path);
+  }
+
+  writeFile(service: Service, path: string, content: string): Promise<void> {
+    return fileService.writeFile(this.getContainer(service), path, content);
+  }
+
   closeLogStreams(): void {
     for (const stream of this.logStreams) stream.destroy();
 
@@ -333,8 +369,8 @@ export class DockerService {
   }
 }
 
-export let dockerService: DockerService = new DockerService();
+export let dockerRuntime: DockerRuntime = new DockerRuntime();
 
-export function overrideDockerService(instance: DockerService): void {
-  dockerService = instance;
+export function overrideDockerRuntime(instance: DockerRuntime): void {
+  dockerRuntime = instance;
 }

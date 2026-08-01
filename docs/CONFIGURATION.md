@@ -28,6 +28,10 @@ The schema-driven settings in `src/shared/configSchema.ts` are the source of tru
 | Variable                    | Default                            | Description                                                                                |
 | --------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------ |
 | `DOCKER_HOSTS`              | Local Docker socket when available | Comma-separated Docker socket or TCP endpoints                                             |
+| `KUBERNETES_ENABLED`        | `false`                            | Enables Kubernetes discovery and container operations                                      |
+| `KUBERNETES_KUBECONFIG`     | In-cluster or default kubeconfig   | Optional path to a mounted kubeconfig                                                      |
+| `KUBERNETES_CONTEXTS`       | Current context                    | Comma-separated kubeconfig contexts                                                        |
+| `KUBERNETES_NAMESPACES`     | `default`                          | Comma-separated namespaces scanned for regular pod containers                              |
 | `NETWORK_CIDRS`             | `192.168.0.0/24`                   | Comma-separated CIDR ranges available to the network scanner                               |
 | `HEALTH_CHECK_INTERVAL`     | `30000`                            | Health-check interval in milliseconds                                                      |
 | `RESOURCE_MONITOR_INTERVAL` | `5000`                             | Docker resource-sampling interval in milliseconds                                          |
@@ -58,6 +62,17 @@ DOCKER_HOSTS=tcp://192.168.1.100:2375,tcp://192.168.1.101:2375
 ```
 
 Prefer TLS-protected Docker endpoints or a restricted Docker socket proxy. An unprotected Docker TCP endpoint provides privileged host access.
+
+### Kubernetes
+
+Set `KUBERNETES_ENABLED=true`. When DockDash runs in a cluster it uses its service account;
+otherwise mount a kubeconfig and set `KUBERNETES_KUBECONFIG`. Discovery scans every regular
+container in `KUBERNETES_NAMESPACES`; init containers and terminal pods are excluded.
+
+The service account needs `get`, `list`, and `watch` on `pods`, `get` on `pods/log`, `create`
+on `pods/exec`, and `get`/`list` on `pods.metrics.k8s.io`. Pod recreation additionally needs
+`delete` on `pods`. Kubernetes start/stop is intentionally unsupported because those are
+workload scaling operations rather than individual container operations.
 
 ### Network scanning
 

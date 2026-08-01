@@ -3,11 +3,11 @@ import express, { Router } from "express";
 import { fileContentRequestSchema } from "@shared/requestSchemas.js";
 import type { ApiSuccess, FileContentResponse } from "@shared/responseSchemas.js";
 
+import { serviceRepository } from "../db/serviceRepository.js";
 import { config } from "../lib/config.js";
 import { isValidContainerPath } from "../lib/validate.js";
 import { validateBody } from "../middleware/validateRequest.js";
-import { dockerService } from "../services/dockerService.js";
-import { fileService } from "../services/fileService.js";
+import { containerRuntimeService } from "../services/containerRuntime/containerRuntimeService.js";
 
 const router = Router();
 
@@ -23,8 +23,8 @@ router.get("/services/:id/files", async (req, res) => {
   }
 
   try {
-    const container = dockerService.getContainerForServiceId(String(req.params.id));
-    const entries = await fileService.listFiles(container, rawPath);
+    const service = serviceRepository.requireService(String(req.params.id));
+    const entries = await containerRuntimeService.getRuntime(service).listFiles(service, rawPath);
 
     res.json({ path: rawPath, entries });
   } catch (err) {
@@ -44,8 +44,10 @@ router.get("/services/:id/files/content", async (req, res) => {
   }
 
   try {
-    const container = dockerService.getContainerForServiceId(req.params.id);
-    const result: FileContentResponse = await fileService.readFile(container, rawPath);
+    const service = serviceRepository.requireService(req.params.id);
+    const result: FileContentResponse = await containerRuntimeService
+      .getRuntime(service)
+      .readFile(service, rawPath);
 
     res.json(result);
   } catch (err) {
@@ -74,9 +76,9 @@ router.put(
     }
 
     try {
-      const container = dockerService.getContainerForServiceId(String(req.params.id));
+      const service = serviceRepository.requireService(String(req.params.id));
 
-      await fileService.writeFile(container, filePath, content);
+      await containerRuntimeService.getRuntime(service).writeFile(service, filePath, content);
 
       const response: ApiSuccess = { success: true };
 

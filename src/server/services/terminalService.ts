@@ -55,6 +55,21 @@ class TerminalService {
     }
   }
 
+  registerSession(
+    userSessionId: string,
+    stream: NodeJS.ReadWriteStream,
+  ): { sessionId: string; stream: NodeJS.ReadWriteStream } {
+    const sessionId = uuidv4();
+
+    this.sessions.set(sessionId, {
+      stream,
+      lastActivity: Date.now(),
+      ownerSessionId: userSessionId,
+    });
+
+    return { sessionId, stream };
+  }
+
   // Returns the session only when the caller's express-session ID matches
   // what was recorded at open time, so a leaked sessionId UUID alone can't
   // be used to write input.

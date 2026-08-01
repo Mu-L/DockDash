@@ -27,7 +27,7 @@ import notificationRoutes from "./routes/notifications.js";
 import serviceRoutes from "./routes/services.js";
 import systemRoutes from "./routes/system.js";
 import terminalRoutes from "./routes/terminal.js";
-import { dockerService } from "./services/dockerService.js";
+import { dockerRuntime } from "./services/containerRuntime/dockerRuntime.js";
 import { healthCheckService } from "./services/healthCheckService.js";
 import { networkScanner } from "./services/networkScanner.js";
 import { resourceStatsService } from "./services/resourceStatsService.js";
@@ -171,7 +171,7 @@ const shutdown = createGracefulShutdown({
   startupTasks,
   closeActiveResources: () => {
     networkScanner.shutdown();
-    dockerService.closeLogStreams();
+    dockerRuntime.closeLogStreams();
     terminalService.shutdown();
   },
   closeDatabase: closeConnection,

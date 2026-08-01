@@ -33,6 +33,16 @@ export class Service {
       );
     }
 
+    if (a.source === ServiceSource.KUBERNETES && b.source === ServiceSource.KUBERNETES) {
+      return (
+        a.metadata?.clusterId === b.metadata?.clusterId &&
+        a.metadata?.namespace === b.metadata?.namespace &&
+        a.metadata?.workloadKind === b.metadata?.workloadKind &&
+        a.metadata?.workloadName === b.metadata?.workloadName &&
+        a.metadata?.containerName === b.metadata?.containerName
+      );
+    }
+
     // Network services: one service per host, ports are additive
     return a.host === b.host;
   }

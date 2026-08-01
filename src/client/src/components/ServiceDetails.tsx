@@ -2,7 +2,7 @@ import { Fragment, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { Service } from "@shared";
-import { ServiceSource } from "@shared";
+import { isContainerService } from "@shared";
 import type { UpdateServiceRequest } from "@shared/requestSchemas.js";
 
 import { NumberInput } from "@/components/NumberInput";
@@ -24,7 +24,7 @@ interface ServiceDetailsProps {
 }
 
 export function ServiceDetails({ service, onSave, onDelete, onCancel }: ServiceDetailsProps) {
-  const isDocker = service.source === ServiceSource.DOCKER;
+  const isContainer = isContainerService(service);
   const { t } = useTranslation();
   const config = useConfig();
   const [editName, setEditName] = useState(service.name);
@@ -116,7 +116,7 @@ export function ServiceDetails({ service, onSave, onDelete, onCancel }: ServiceD
             formatTag={(v) => `:${v}`}
             placeholder={t("modals.portsPlaceholder")}
             onTagClick={
-              !isDocker && !editCheckPort.trim()
+              !isContainer && !editCheckPort.trim()
                 ? (v) => {
                     setEditCheckPort(v);
                     clearError("checkPort");
@@ -126,7 +126,7 @@ export function ServiceDetails({ service, onSave, onDelete, onCancel }: ServiceD
             tagClickTitle={t("modals.useAsCheckPort")}
           />
         </FormGroup>
-        {!isDocker && (
+        {!isContainer && (
           <FormGroup error={errors.checkPort}>
             <Label>{t("modals.checkPort")}</Label>
             <NumberInput
@@ -140,7 +140,7 @@ export function ServiceDetails({ service, onSave, onDelete, onCancel }: ServiceD
           </FormGroup>
         )}
 
-        {isDocker && (config?.resourceMonitorEnabled ?? true) && (
+        {isContainer && (config?.resourceMonitorEnabled ?? true) && (
           <div className="bg-background rounded-md p-4 mb-3.5 mt-6">
             <ContainerResourceMonitor serviceId={service.id!} />
           </div>

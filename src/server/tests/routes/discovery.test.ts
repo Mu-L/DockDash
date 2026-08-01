@@ -20,8 +20,8 @@ const mockLogger = vi.hoisted(() => ({
   debug: vi.fn(),
 }));
 
-vi.mock("@server/services/dockerService.js", () => ({
-  dockerService: mockDockerService,
+vi.mock("@server/services/containerRuntime/dockerRuntime.js", () => ({
+  dockerRuntime: mockDockerService,
 }));
 vi.mock("@server/services/networkScanner.js", () => ({
   networkScanner: mockNetworkScanner,

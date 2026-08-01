@@ -10,6 +10,9 @@ const mockDb = vi.hoisted(() => ({
 const mockDockerService = vi.hoisted(() => ({
   getContainerForServiceId: vi.fn(),
   getContainerStats: vi.fn(),
+  stats: vi.fn((service) =>
+    mockDockerService.getContainerStats(mockDockerService.getContainerForServiceId(service.id)),
+  ),
 }));
 
 const mockNotificationService = vi.hoisted(() => ({
@@ -27,7 +30,9 @@ const mockConfig = vi.hoisted(() => ({
 vi.mock("@server/lib/config.js", () => ({ config: mockConfig }));
 vi.mock("@server/db/serviceRepository.js", () => ({ serviceRepository: mockDb }));
 vi.mock("@server/db/historyRepository.js", () => ({ historyRepository: mockDb }));
-vi.mock("@server/services/dockerService.js", () => ({ dockerService: mockDockerService }));
+vi.mock("@server/services/containerRuntime/dockerRuntime.js", () => ({
+  dockerRuntime: mockDockerService,
+}));
 vi.mock("@server/services/notificationService.js", () => ({
   notificationService: mockNotificationService,
 }));

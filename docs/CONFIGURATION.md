@@ -102,7 +102,7 @@ OIDC is enabled when `OIDC_ISSUER`, `OIDC_CLIENT_ID`, and `OIDC_CLIENT_SECRET` a
 
 | Variable             | Default                | Description                                                            |
 | -------------------- | ---------------------- | ---------------------------------------------------------------------- |
-| `OIDC_ISSUER`        | unset                  | Provider discovery URL                                                 |
+| `OIDC_ISSUER`        | unset                  | Provider issuer or discovery URL                                       |
 | `OIDC_CLIENT_ID`     | unset                  | Registered client ID                                                   |
 | `OIDC_CLIENT_SECRET` | unset                  | Registered client secret                                               |
 | `OIDC_REDIRECT_URI`  | auto-detected          | Explicit callback URL when proxy headers do not produce the public URL |

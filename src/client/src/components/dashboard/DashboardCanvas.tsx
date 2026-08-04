@@ -838,7 +838,7 @@ export function DashboardCanvas({
   };
 
   return (
-    <div className="flex-1 relative bg-muted border border-border rounded-[10px] overflow-hidden min-h-[400px]">
+    <div className="flex-1 flex flex-col relative bg-muted border border-border rounded-[10px] overflow-hidden min-h-[400px]">
       <div className="flex items-center justify-between gap-2 px-3 py-2 bg-card/90 border-b border-border">
         <div className="flex items-center gap-2.5">
           <span className="text-[0.85rem] text-foreground font-semibold">
@@ -895,7 +895,7 @@ export function DashboardCanvas({
 
       <div
         ref={canvasRef}
-        className="w-full h-full relative overflow-hidden canvas-dot-grid"
+        className="w-full flex-1 min-h-0 relative overflow-hidden canvas-dot-grid"
         style={{ cursor: isPanning ? "grabbing" : "default" }}
         onMouseDown={handleCanvasMouseDown}
       >

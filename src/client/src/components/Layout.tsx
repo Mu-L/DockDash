@@ -190,7 +190,7 @@ function Layout({ children }: LayoutProps) {
         </div>
       )}
 
-      <main className="pt-14 min-h-screen">
+      <main className="pt-14 min-h-screen flex flex-col">
         {updateInfo && (
           <div className="relative flex items-center justify-center gap-3 px-4 py-2 bg-warning/10 border-b border-warning/20 text-xs text-warning">
             <span>{t("nav.updateAvailable", { version: updateInfo.version })}</span>
@@ -218,6 +218,16 @@ function Layout({ children }: LayoutProps) {
           </Suspense>
         )}
         {children}
+        <footer className="mt-auto shrink-0 px-6 py-3 text-center">
+          <a
+            href="https://github.com/dougmaitelli/DockDash"
+            target="_blank"
+            rel="noreferrer"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {t("nav.sourceLicense")}
+          </a>
+        </footer>
       </main>
     </>
   );

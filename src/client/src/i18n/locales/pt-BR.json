@@ -5,6 +5,7 @@
     "discovery": "Descoberta",
     "settings": "Configurações",
     "logout": "Sair",
+    "sourceLicense": "Código-fonte · AGPL-3.0",
     "updateAvailable": "{{version}} disponível",
     "releaseNotes": "Notas de versão"
   },

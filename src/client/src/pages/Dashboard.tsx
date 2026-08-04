@@ -20,7 +20,7 @@ export default function Dashboard() {
   } = useDashboard();
 
   return (
-    <div className="p-6 h-[calc(100vh-56px)] flex flex-col gap-5">
+    <div className="p-6 flex-1 flex flex-col gap-5">
       <DashboardCanvas
         allServices={allServices}
         services={services}

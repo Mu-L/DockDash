@@ -1,9 +1,11 @@
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
 
 function Login() {
+  const { t } = useTranslation();
   const { enabled, user, isLoading } = useAuth();
   const navigate = useNavigate();
   const error = new URLSearchParams(window.location.search).get("error");
@@ -36,6 +38,15 @@ function Login() {
           <button className="w-full px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors cursor-pointer">
             Login with SSO
           </button>
+        </a>
+
+        <a
+          href="https://github.com/dougmaitelli/DockDash"
+          target="_blank"
+          rel="noreferrer"
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {t("nav.sourceLicense")}
         </a>
       </div>
     </div>

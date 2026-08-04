@@ -5,6 +5,7 @@
     "discovery": "Discovery",
     "settings": "Settings",
     "logout": "Logout",
+    "sourceLicense": "Source · AGPL-3.0",
     "updateAvailable": "{{version}} is available",
     "releaseNotes": "Release notes"
   },

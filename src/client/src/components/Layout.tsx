@@ -218,7 +218,7 @@ function Layout({ children }: LayoutProps) {
           </Suspense>
         )}
         {children}
-        <footer className="mt-auto shrink-0 px-6 py-3 text-center">
+        <footer className="mt-auto shrink-0 px-6 py-1 text-center">
           <a
             href="https://github.com/dougmaitelli/DockDash"
             target="_blank"

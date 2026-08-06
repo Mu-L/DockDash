@@ -21,6 +21,14 @@ describe("sanitizeDockerError", () => {
     expect(sanitizeDockerError(err)).toBe("403 Forbidden");
   });
 
+  it("escapes a stray angle bracket instead of assembling a nested tag", () => {
+    expect(sanitizeDockerError(new Error("<<script>alert('xss')</script>"))).toBe("&lt;");
+  });
+
+  it("renders an unterminated tag as harmless text", () => {
+    expect(sanitizeDockerError(new Error("safe text <script"))).toBe("safe text script");
+  });
+
   it("collapses multiple whitespace sequences into a single space", () => {
     const err = new Error("some   error\n\nwith   whitespace");
 

@@ -65,16 +65,16 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
-    "@types/better-sqlite3": "^7.6.13",
+    "@types/better-sqlite3": "9.6.0",
     "@types/cors": "^2.8.19",
     "@types/dockerode": "^4.0.1",
     "@types/express": "^5.0.6",
     "@types/express-session": "^1.19.0",
-    "@types/node": "^26.0.0",
+    "@types/node": "26.1.2",
     "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.3",
+    "@types/react-dom": "19.2.4",
     "@types/sanitize-html": "^2.16.1",
-    "@types/supertest": "^7.2.0",
+    "@types/supertest": "7.2.1",
     "@types/uuid": "^11.0.0",
     "@typescript-eslint/eslint-plugin": "^8.65.0",
     "@typescript-eslint/parser": "^8.65.0",
@@ -95,7 +95,7 @@
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.4",
     "typescript": "^6.0.3",
-    "vite": "^8.1.5",
+    "vite": "8.2.0",
     "vitest": "^4.1.9"
   }
 }

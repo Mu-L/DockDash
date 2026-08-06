@@ -1,5 +1,6 @@
 import type { Request } from "express";
 import { Router } from "express";
+import { rateLimit } from "express-rate-limit";
 import {
   authorizationCodeGrant,
   buildAuthorizationUrl,
@@ -34,6 +35,13 @@ declare module "express-session" {
 }
 
 const router = Router();
+const authorizationRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: { error: "Too many authentication attempts, please try again later" },
+});
 
 // Returns current auth state — always 200 so the client can bootstrap without error handling
 router.get("/me", (req, res) => {
@@ -47,7 +55,7 @@ router.get("/me", (req, res) => {
 });
 
 // Redirect to OIDC provider
-router.get("/login", async (req, res) => {
+router.get("/login", authorizationRateLimit, async (req, res) => {
   if (!config.oidcEnabled) {
     res.redirect("/");
 
@@ -79,7 +87,7 @@ router.get("/login", async (req, res) => {
 });
 
 // Handle redirect back from OIDC provider
-router.get("/callback", async (req, res) => {
+router.get("/callback", authorizationRateLimit, async (req, res) => {
   if (!req.session.oidcCodeVerifier || !req.session.oidcState) {
     res.redirect("/login?error=invalid_state");
 

@@ -153,13 +153,13 @@ DockDash is configured through environment variables. See the [configuration gui
 Environment variables can be defined in a `.env` file at the project root. See [`.env.example`](.env.example) for available options.
 
 ```bash
-yarn install
-yarn dev             # starts both Vite (port 8081) and the Express server (port 3001)
-yarn dev:mock        # same as dev but with no Docker dependency — uses an in-memory database pre-seeded with six containers and 30 days of synthetic health and resource history
-yarn test            # run the server-side test suite
-yarn test:coverage   # run tests with V8 coverage report (output: coverage/)
-yarn typecheck       # type-check client and server
-yarn lint:fix        # auto-fix lint and formatting
+pnpm install
+pnpm dev             # starts both Vite (port 8081) and the Express server (port 3001)
+pnpm dev:mock        # same as dev but with no Docker dependency — uses an in-memory database pre-seeded with six containers and 30 days of synthetic health and resource history
+pnpm test            # run the server-side test suite
+pnpm test:coverage   # run tests with V8 coverage report (output: coverage/)
+pnpm typecheck       # type-check client and server
+pnpm lint:fix        # auto-fix lint and formatting
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the complete development workflow, database migration guidance, required checks, and pull-request expectations.

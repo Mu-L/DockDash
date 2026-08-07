@@ -7,15 +7,15 @@ ARG APP_VERSION
 
 WORKDIR /app
 
-COPY package.json yarn.lock ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN apk add --no-cache python3 make g++ && \
-    npm install -g yarn && yarn install --frozen-lockfile
+    npm install --global pnpm@11.20.0 && pnpm install --frozen-lockfile
 
 COPY . .
-RUN yarn build
+RUN pnpm run build
 
 # Prune devDependencies before copying to runner
-RUN yarn install --production --ignore-scripts
+RUN pnpm install --prod --ignore-scripts --frozen-lockfile
 
 # Stage 2: Production
 FROM node:26-alpine AS runner

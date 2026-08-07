@@ -4,10 +4,10 @@
 
 ## Validation
 
-- [ ] `yarn typecheck`
-- [ ] `yarn lint`
-- [ ] `yarn test`
-- [ ] `yarn build`
+- [ ] `pnpm typecheck`
+- [ ] `pnpm lint`
+- [ ] `pnpm test`
+- [ ] `pnpm build`
 - [ ] I added or updated tests where appropriate
 - [ ] I added or updated documentation where appropriate
 

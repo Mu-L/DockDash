@@ -17,17 +17,17 @@ By participating, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 Requirements:
 
 - Node.js 26
-- Yarn 1.x
+- pnpm 11.x
 - Docker, only when testing real container discovery and controls
 
 Install dependencies and start the mock development environment:
 
 ```bash
-yarn install --frozen-lockfile
-yarn dev:mock
+pnpm install --frozen-lockfile
+pnpm dev:mock
 ```
 
-`dev:mock` starts the client and a mock server with seeded services, so most UI development does not require Docker. Use `yarn dev` when testing against a real Docker daemon.
+`dev:mock` starts the client and a mock server with seeded services, so most UI development does not require Docker. Use `pnpm dev` when testing against a real Docker daemon.
 
 Environment variables may be placed in a local `.env` file. Start from `.env.example` and see [Configuration](docs/CONFIGURATION.md). Never commit `.env`.
 
@@ -36,7 +36,7 @@ Environment variables may be placed in a local `.env` file. Start from `.env.exa
 DockDash uses Drizzle ORM and SQLite. When changing the schema:
 
 1. Update the schema definitions in `src/server/db/schema/`.
-2. Generate a migration with `yarn db:generate`.
+2. Generate a migration with `pnpm db:generate`.
 3. Review the generated SQL and metadata under `drizzle/`.
 4. Add or update repository tests that exercise the migration or affected queries.
 
@@ -47,13 +47,13 @@ Do not edit an already-released migration to change deployed behavior; add a new
 Run these commands before opening a pull request:
 
 ```bash
-yarn typecheck
-yarn lint
-yarn test
-yarn build
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm build
 ```
 
-Use `yarn lint:fix` to apply supported ESLint and Prettier fixes. New behavior should include tests at the closest applicable layer.
+Use `pnpm lint:fix` to apply supported ESLint and Prettier fixes. New behavior should include tests at the closest applicable layer.
 
 ## Pull requests
 

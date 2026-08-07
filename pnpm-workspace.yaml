@@ -1,0 +1,11 @@
+allowBuilds:
+  better-sqlite3: true
+  cpu-features: true
+  esbuild: true
+  protobufjs: true
+  ssh2: true
+minimumReleaseAgeExclude:
+  - lucide-react
+  - postcss
+  - tsx
+  - vite

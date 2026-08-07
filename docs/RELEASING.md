@@ -44,10 +44,10 @@ write access.
 4. Run the project checks locally:
 
    ```bash
-   yarn typecheck
-   yarn lint
-   yarn test
-   yarn build
+   pnpm typecheck
+   pnpm lint
+   pnpm test
+   pnpm build
    ```
 
 5. Choose the next semantic version.

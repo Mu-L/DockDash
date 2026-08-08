@@ -43,6 +43,8 @@ const authorizationRateLimit = rateLimit({
   message: { error: "Too many authentication attempts, please try again later" },
 });
 
+router.use(authorizationRateLimit);
+
 // Returns current auth state — always 200 so the client can bootstrap without error handling
 router.get("/me", (req, res) => {
   if (!config.oidcEnabled) {
@@ -55,7 +57,7 @@ router.get("/me", (req, res) => {
 });
 
 // Redirect to OIDC provider
-router.get("/login", authorizationRateLimit, async (req, res) => {
+router.get("/login", async (req, res) => {
   if (!config.oidcEnabled) {
     res.redirect("/");
 
@@ -87,7 +89,7 @@ router.get("/login", authorizationRateLimit, async (req, res) => {
 });
 
 // Handle redirect back from OIDC provider
-router.get("/callback", authorizationRateLimit, async (req, res) => {
+router.get("/callback", async (req, res) => {
   if (!req.session.oidcCodeVerifier || !req.session.oidcState) {
     res.redirect("/login?error=invalid_state");
 

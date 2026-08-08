@@ -1,4 +1,5 @@
 import express from "express";
+import { rateLimit } from "express-rate-limit";
 import session from "express-session";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -37,6 +38,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 const PORT = config.port;
+const GENERAL_RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const GENERAL_RATE_LIMIT_REQUESTS = 300;
 const jobs: BackgroundJob[] = [
   new HealthCheckJob(),
   new HistoryCleanupJob(),
@@ -71,8 +74,19 @@ app.use(
   }),
 );
 
+const apiRateLimit = rateLimit({
+  windowMs: GENERAL_RATE_LIMIT_WINDOW_MS,
+  limit: GENERAL_RATE_LIMIT_REQUESTS,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: { error: "Too many API requests, please try again later" },
+});
+
 // Auth routes (no auth required)
 app.use("/auth", authRoutes);
+
+// Protect all API routes, including unauthenticated health checks
+app.use("/api", apiRateLimit);
 
 // Health checks (no auth required — used by container orchestrators)
 app.use("/api", healthRoutes);
@@ -128,7 +142,15 @@ app.use("/api", notificationRoutes);
 app.use(express.static(path.join(__dirname, "../client")));
 
 // Catch-all: serve index.html for SPA routing
-app.get("/{*path}", (_req, res) => {
+const spaFallbackRateLimit = rateLimit({
+  windowMs: GENERAL_RATE_LIMIT_WINDOW_MS,
+  limit: GENERAL_RATE_LIMIT_REQUESTS,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: "Too many requests, please try again later",
+});
+
+app.get("/{*path}", spaFallbackRateLimit, (_req, res) => {
   res.sendFile(path.join(__dirname, "../client/index.html"));
 });
 

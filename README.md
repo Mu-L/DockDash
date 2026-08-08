@@ -6,7 +6,30 @@
 [![GitHub release](https://img.shields.io/github/v/release/dougmaitelli/DockDash)](https://github.com/dougmaitelli/DockDash/releases)
 [![GHCR](https://img.shields.io/badge/container-ghcr.io-blue)](https://github.com/dougmaitelli/DockDash/pkgs/container/dockdash)
 
-A self-hosted dashboard for visualizing Docker containers and network services. DockDash discovers services automatically, tracks their health, monitors container image updates, and lets you map connections between them on an interactive canvas.
+A self-hosted, semantic-version-aware update monitor for pinned Docker images — with the changelog attached.
+
+Most container dashboards answer one question: **did the image behind this tag get a new digest?** That is useful for floating tags such as `latest`, but it does not tell you that a service pinned to `1.25` can be upgraded to `1.26`.
+
+DockDash checks the versions published by the image registry, compares them with the version you are actually running, and shows the GitHub release notes for the available version. You get a useful update such as **`1.25 → 1.26`**, not just “new image available” — without giving up reproducible, version-pinned deployments.
+
+It also brings service discovery, uptime and resource monitoring, alerts, container management, and an interactive topology map into the same self-hosted dashboard.
+
+## Update monitoring that understands versions
+
+DockDash treats update checks differently depending on the image tag:
+
+| Your image tag | How DockDash checks it |
+| --- | --- |
+| A version tag such as `1.25`, `v1.25.3`, or `release-1.25.3-alpine` | Finds compatible tags in the registry and compares their numeric version components while preserving the tag's prefix and suffix family |
+| A floating tag such as `latest`, `stable`, or `dev` | Falls back to comparing the locally running image digest with the registry digest |
+
+When a newer version is found, DockDash:
+
+1. Reports the running and available versions in the dashboard and notifications.
+2. Resolves the source repository from OCI image metadata, GHCR coordinates, or the Docker Hub image name.
+3. Fetches the matching GitHub release and displays its changelog alongside the service.
+
+This makes version pinning the expected workflow rather than an obstacle. You decide when to upgrade, with the actual version change and release notes available before you touch the deployment.
 
 ## Documentation
 
@@ -19,6 +42,10 @@ A self-hosted dashboard for visualizing Docker containers and network services. 
 
 ## Features
 
+- **Semantic-version-aware updates** — compares a pinned image tag with compatible registry tags and reports the actual version transition
+- **Changelogs for available versions** — resolves the source repository and displays the matching GitHub release notes before you upgrade
+- **Digest fallback for floating tags** — still detects changes to `latest`, `stable`, `dev`, and other non-version tags
+- **Update notifications** — sends current-to-latest version details through any notification platform supported by Apprise
 - **Multi-host Docker discovery** — scans one or more local or remote Docker daemons and imports containers and their exposed ports as services
 - **Network discovery** — scans configurable CIDR ranges, with quick and deep scan modes, to find services not managed by Docker
 - **Service management** — add services manually or import scan results, then search, filter, sort, edit, and choose which services appear on the dashboard
@@ -28,9 +55,7 @@ A self-hosted dashboard for visualizing Docker containers and network services. 
 - **Docker logs** — streams live container logs in the UI with timestamp parsing and ANSI stripping
 - **File explorer** — browses a container's filesystem and supports viewing and editing text files in place
 - **Terminal** — provides an interactive, theme-aware shell inside containers through xterm.js
-- **Image update monitoring** — checks Docker registries for newer images and flags containers with available updates
-- **Changelogs** — resolves source repositories from OCI labels and registry metadata, then displays relevant GitHub release notes
-- **Apprise notifications** — alerts on service failures and recovery, image updates, and configurable CPU or memory thresholds
+- **Apprise notifications** — also alerts on service failures and recovery and configurable CPU or memory thresholds
 - **Interactive topology canvas** — drag, group, and resize service nodes; draw and label connections; snap to grid; zoom, pan, and fit the topology to the screen
 - **Themes and localization** — includes multiple built-in themes plus English and Brazilian Portuguese interfaces
 - **OIDC authentication** — optional SSO through standard OpenID Connect providers such as Keycloak, Authentik, Authelia, and Google

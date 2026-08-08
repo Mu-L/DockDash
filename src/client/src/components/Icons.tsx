@@ -8,6 +8,7 @@ import {
   Folder,
   Globe,
   LayoutGrid,
+  type LucideProps,
   Maximize,
   Menu,
   Minus,
@@ -21,6 +22,9 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+
+const SolidStop = (props: LucideProps) => <Square {...props} fill="currentColor" />;
+const SolidPlay = (props: LucideProps) => <Play {...props} fill="currentColor" />;
 
 export const Icons = {
   Plus,
@@ -38,8 +42,8 @@ export const Icons = {
   ArrowRight,
   Docker: Container,
   Terminal,
-  Stop: Square,
-  Play,
+  Stop: SolidStop,
+  Play: SolidPlay,
   Globe,
   Folder,
   File,

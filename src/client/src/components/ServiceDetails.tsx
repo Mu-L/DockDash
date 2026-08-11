@@ -116,7 +116,7 @@ export function ServiceDetails({ service, onSave, onDelete, onCancel }: ServiceD
             formatTag={(v) => `:${v}`}
             placeholder={t("modals.portsPlaceholder")}
             onTagClick={
-              !isContainer && !editCheckPort.trim()
+              !editCheckPort.trim()
                 ? (v) => {
                     setEditCheckPort(v);
                     clearError("checkPort");
@@ -126,19 +126,17 @@ export function ServiceDetails({ service, onSave, onDelete, onCancel }: ServiceD
             tagClickTitle={t("modals.useAsCheckPort")}
           />
         </FormGroup>
-        {!isContainer && (
-          <FormGroup error={errors.checkPort}>
-            <Label>{t("modals.checkPort")}</Label>
-            <NumberInput
-              value={editCheckPort}
-              onChange={(e) => {
-                setEditCheckPort(e.target.value);
-                clearError("checkPort");
-              }}
-              placeholder={t("modals.checkPortPlaceholder")}
-            />
-          </FormGroup>
-        )}
+        <FormGroup error={errors.checkPort}>
+          <Label>{t("modals.checkPort")}</Label>
+          <NumberInput
+            value={editCheckPort}
+            onChange={(e) => {
+              setEditCheckPort(e.target.value);
+              clearError("checkPort");
+            }}
+            placeholder={t("modals.checkPortPlaceholder")}
+          />
+        </FormGroup>
 
         {isContainer && (config?.resourceMonitorEnabled ?? true) && (
           <div className="bg-background rounded-md p-4 mb-3.5 mt-6">

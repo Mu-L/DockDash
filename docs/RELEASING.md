@@ -37,7 +37,8 @@ Replace `123` with the pull-request number. The stable PR tag always points to i
 Revision-specific tags preserve older builds while the PR is open. Closing or merging the pull
 request deletes the current image and all revision-specific package versions for that PR. Images
 are not published for pull requests from forks because their workflow tokens do not have package
-write access.
+write access. After a successful publish, the workflow creates or updates a pull-request comment
+with commands for pulling both the stable and revision-specific images.
 
 ## Preparing a release
 

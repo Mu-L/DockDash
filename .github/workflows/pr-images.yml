@@ -12,6 +12,7 @@ concurrency:
 permissions:
   contents: read
   packages: write
+  pull-requests: write
 
 env:
   IMAGE: ghcr.io/${{ github.repository }}
@@ -59,6 +60,56 @@ jobs:
 
       - name: Show image name
         run: echo "Published ${{ steps.meta.outputs.tags }}"
+
+      - name: Comment on pull request
+        uses: actions/github-script@v9
+        env:
+          IMAGE: ${{ env.IMAGE }}
+          PR_TAG: ${{ env.TAG }}
+          REVISION: ${{ github.event.pull_request.head.sha }}
+        with:
+          script: |
+            const marker = '<!-- pr-image-deployment -->';
+            const image = process.env.IMAGE.toLowerCase();
+            const tag = process.env.PR_TAG;
+            const revision = process.env.REVISION;
+            const shortRevision = revision.slice(0, 7);
+            const body = [
+              marker,
+              '### Testing image deployed',
+              '',
+              `The testing images for commit \`${shortRevision}\` are ready:`,
+              '',
+              '```bash',
+              `docker pull ${image}:${tag}`,
+              `docker pull ${image}:${tag}-${revision}`,
+              '```',
+              '',
+              `The \`${tag}\` tag always points to the latest deployment for this pull request.`,
+            ].join('\n');
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              ...context.repo,
+              issue_number: context.issue.number,
+              per_page: 100,
+            });
+            const previousComment = comments.find(
+              (comment) => comment.user?.type === 'Bot' && comment.body?.includes(marker),
+            );
+
+            if (previousComment) {
+              await github.rest.issues.updateComment({
+                ...context.repo,
+                comment_id: previousComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                ...context.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
 
   cleanup:
     name: Delete PR image

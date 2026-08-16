@@ -16,4 +16,4 @@ exec docker run --rm \
   -w /work \
   -e PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
   "$IMAGE" \
-  node node_modules/.bin/tsx scripts/take-screenshots.ts
+  node_modules/.bin/tsx scripts/take-screenshots.ts

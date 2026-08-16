@@ -70,24 +70,30 @@ This makes version pinning the expected workflow rather than an obstacle. You de
 </td>
 <td width="33%">
 <a href="screenshots/2.png"><img src="screenshots/2.png" alt="Service drawer — Details tab"></a>
-<p><em>Service drawer (Details tab) — container metadata, port info, and a color-coded uptime history graph for the last 30 days.</em></p>
+<p><em>Service drawer (Details tab) — HTTPS configuration and live certificate details, including trust, expiration, issuer, and deployment status.</em></p>
 </td>
 <td width="33%">
-<a href="screenshots/3.png"><img src="screenshots/3.png" alt="Services table"></a>
-<p><em>Services table — flat list of all discovered services with live status, image version, ports, and per-row uptime history bars.</em></p>
+<a href="screenshots/3.png"><img src="screenshots/3.png" alt="Service drawer — Resource monitor"></a>
+<p><em>Service drawer (Details tab) — live and historical CPU, memory, network, and disk usage for the selected container.</em></p>
 </td>
 </tr>
 <tr>
 <td width="33%">
-<a href="screenshots/4.png"><img src="screenshots/4.png" alt="Service drawer — Changelog tab"></a>
+<a href="screenshots/4.png"><img src="screenshots/4.png" alt="Services table"></a>
+<p><em>Services table — flat list of all discovered services with live status, image version, ports, and certificate health.</em></p>
+</td>
+<td width="33%">
+<a href="screenshots/5.png"><img src="screenshots/5.png" alt="Service drawer — Changelog tab"></a>
 <p><em>Service drawer (Changelog tab) — GitHub release notes fetched automatically for the running image version.</em></p>
 </td>
 <td width="33%">
-<a href="screenshots/5.png"><img src="screenshots/5.png" alt="Service drawer — Files tab"></a>
+<a href="screenshots/6.png"><img src="screenshots/6.png" alt="Service drawer — Files tab"></a>
 <p><em>Service drawer (Files tab) — browse a container's filesystem and view or edit text files directly in the UI.</em></p>
 </td>
+</tr>
+<tr>
 <td width="33%">
-<a href="screenshots/6.png"><img src="screenshots/6.png" alt="Service drawer — Terminal tab"></a>
+<a href="screenshots/7.png"><img src="screenshots/7.png" alt="Service drawer — Terminal tab"></a>
 <p><em>Service drawer (Terminal tab) — interactive shell inside any container, themed to match the active UI theme.</em></p>
 </td>
 </tr>

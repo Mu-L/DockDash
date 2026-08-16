@@ -61,13 +61,15 @@ const SERVICES = [
     ...makeService(
       IDS.traefik,
       "traefik",
-      "172.17.0.10",
+      "dashboard.example.com",
       [80, 443, 8080],
       "up",
       "traefik",
       "v3.2",
       ["web", "internal"],
     ),
+    protocol: "https",
+    checkPort: 443,
     metadata: {
       dockerHostId: "local",
       containerId: "111111000001",
@@ -80,7 +82,13 @@ const SERVICES = [
       updateCheckedAt: "2024-12-20T10:00:00.000Z",
     },
   },
-  makeService(IDS.nginx, "nginx", "172.17.0.11", [80], "up", "nginx", "1.27", ["web"]),
+  {
+    ...makeService(IDS.nginx, "nginx", "app.example.com", [80, 443], "up", "nginx", "1.27", [
+      "web",
+    ]),
+    protocol: "https",
+    checkPort: 443,
+  },
   makeService(IDS.postgres, "postgres", "172.17.0.12", [5432], "up", "postgres", "17", [
     "internal",
   ]),
@@ -187,13 +195,24 @@ const DASHBOARD = {
 
 const CONFIG = {
   version: "dev",
+  certVaultConfigured: false,
+  certVaultUrl: null,
   dockerHosts: ["unix:///var/run/docker.sock"],
+  kubernetesEnabled: "false",
+  kubernetesContexts: [],
+  kubernetesNamespaces: [],
   networkCidrs: [],
   healthCheckInterval: 30000,
+  resourceMonitorInterval: 5000,
   updateCheckInterval: 3600000,
   healthHistoryTtlDays: 30,
   appriseConfigured: false,
   containerControlsEnabled: true,
+  healthHistoryEnabled: true,
+  resourceMonitorEnabled: true,
+  cpuSpikeThreshold: 90,
+  memorySpikeThreshold: 90,
+  spikeDurationThreshold: 300,
   fileExplorerEnabled: true,
   terminalEnabled: true,
 };
@@ -202,11 +221,17 @@ const STATS = {
   cpuPercent: 3.2,
   memoryUsed: 142_606_336, // ~136 MB
   memoryLimit: 8_589_934_592, // 8 GB
+  memoryPercent: 1.7,
   networkRx: 284_327_936, // ~271 MB
   networkTx: 58_720_256, // ~56 MB
   blockRead: 1_073_741_824, // 1 GB
   blockWrite: 524_288_000, // 500 MB
 };
+
+const RESOURCE_HISTORY = Array.from({ length: 80 }, (_, i) => ({
+  cpuPercent: 2.5 + Math.sin(i / 5) * 1.4 + (i % 19 === 0 ? 7 : 0),
+  memoryPercent: 1.4 + (i / 80) * 0.3,
+}));
 
 const CHANGELOG = {
   available: true,
@@ -232,6 +257,41 @@ const CHANGELOG = {
     htmlUrl: "https://github.com/traefik/traefik/releases/tag/v3.2.1",
   },
 };
+
+const TLS_CERTIFICATES = [
+  {
+    serviceId: IDS.traefik,
+    hostname: "dashboard.example.com",
+    port: 443,
+    health: "healthy",
+    certVaultStatus: "different",
+    trusted: true,
+    hostnameValid: true,
+    validFrom: "2026-05-19T00:00:00.000Z",
+    validTo: "2026-11-17T23:59:59.000Z",
+    daysRemaining: 93,
+    issuer: "Let's Encrypt R13",
+    serial: "04:A8:2C:71:9F:30:DE:42",
+    fingerprintSha256: "A4:7B:90:13:CE:68:2F:95:44:12:DD:6E:31:79:AB:08",
+    domains: ["dashboard.example.com", "*.example.com"],
+  },
+  {
+    serviceId: IDS.nginx,
+    hostname: "app.example.com",
+    port: 443,
+    health: "healthy",
+    certVaultStatus: "in-use",
+    trusted: true,
+    hostnameValid: true,
+    validFrom: "2026-07-01T00:00:00.000Z",
+    validTo: "2026-12-30T23:59:59.000Z",
+    daysRemaining: 136,
+    issuer: "Let's Encrypt R13",
+    serial: "03:17:B2:8D:E4:55:90:CA",
+    fingerprintSha256: "7D:2E:44:AF:51:C8:90:6B:33:ED:21:73:9A:4F:BC:65",
+    domains: ["app.example.com"],
+  },
+];
 
 const FILES = {
   path: "/",
@@ -461,6 +521,20 @@ async function main() {
 
     if (p === "/api/app-update") return route.fulfill({ json: { hasUpdate: false } });
 
+    if (p === "/api/tls-certificates") return route.fulfill({ json: TLS_CERTIFICATES });
+
+    const certificateMatch = p.match(/^\/api\/services\/([^/]+)\/tls-certificate$/);
+
+    if (certificateMatch) {
+      const certificate = TLS_CERTIFICATES.find(
+        ({ serviceId }) => serviceId === certificateMatch[1],
+      );
+
+      return certificate
+        ? route.fulfill({ json: certificate })
+        : route.fulfill({ status: 404, json: { error: "No TLS certificate found" } });
+    }
+
     if (/\/api\/services\/[^/]+\/health-history/.test(p)) {
       const buckets = Array.from({ length: 80 }, (_, i) => {
         if (i % 17 === 5 || i % 23 === 11) return "down";
@@ -474,6 +548,9 @@ async function main() {
     }
 
     if (/\/api\/services\/[^/]+\/stats/.test(p)) return route.fulfill({ json: STATS });
+
+    if (/\/api\/services\/[^/]+\/resource-history/.test(p))
+      return route.fulfill({ json: RESOURCE_HISTORY });
 
     if (/\/api\/services\/[^/]+\/changelog/.test(p)) return route.fulfill({ json: CHANGELOG });
 
@@ -511,44 +588,57 @@ async function main() {
     // Health history is fetched on mount; the mock returns immediately so a
     // short pause is enough for the graph divs to render.
     await page.waitForTimeout(1000);
+    await page.getByRole("button", { name: "Certificate" }).click();
+    await page.getByText("dashboard.example.com:443").waitFor();
     await page.screenshot({ path: "screenshots/2.png" });
     console.log("✓ screenshots/2.png");
 
     // -----------------------------------------------------------------------
-    // Screenshot 4: Changelog tab
+    // Screenshot 3: Details tab with certificate collapsed and resources
     // -----------------------------------------------------------------------
-    await page.click('button:has-text("Changelog")');
-    await page.waitForTimeout(800);
-    await page.screenshot({ path: "screenshots/4.png" });
-    console.log("✓ screenshots/4.png");
+    await page.getByRole("button", { name: "Certificate" }).click();
+    await page.locator("[data-drawer] .overflow-y-auto").evaluate((element) => {
+      element.scrollTo({ top: element.scrollHeight, behavior: "instant" });
+    });
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: "screenshots/3.png" });
+    console.log("✓ screenshots/3.png");
 
     // -----------------------------------------------------------------------
-    // Screenshot 5: Files tab (captured before Terminal to avoid any xterm
-    // side-effects disrupting subsequent tab interactions)
+    // Screenshot 5: Changelog tab
     // -----------------------------------------------------------------------
-    await page.click('button:has-text("Files")');
+    await page.click('button:has-text("Changelog")');
     await page.waitForTimeout(800);
     await page.screenshot({ path: "screenshots/5.png" });
     console.log("✓ screenshots/5.png");
 
     // -----------------------------------------------------------------------
-    // Screenshot 6: Terminal tab (last — xterm init may affect drawer state)
+    // Screenshot 6: Files tab (captured before Terminal to avoid any xterm
+    // side-effects disrupting subsequent tab interactions)
     // -----------------------------------------------------------------------
-    await page.click('button:has-text("Terminal")');
-    // Wait for xterm to initialise and the mock SSE to deliver all lines
-    await page.waitForTimeout(1800);
+    await page.click('button:has-text("Files")');
+    await page.waitForTimeout(800);
     await page.screenshot({ path: "screenshots/6.png" });
     console.log("✓ screenshots/6.png");
 
     // -----------------------------------------------------------------------
-    // Screenshot 3: Services table
+    // Screenshot 7: Terminal tab (last — xterm init may affect drawer state)
+    // -----------------------------------------------------------------------
+    await page.click('button:has-text("Terminal")');
+    // Wait for xterm to initialise and the mock SSE to deliver all lines
+    await page.waitForTimeout(1800);
+    await page.screenshot({ path: "screenshots/7.png" });
+    console.log("✓ screenshots/7.png");
+
+    // -----------------------------------------------------------------------
+    // Screenshot 4: Services table
     // -----------------------------------------------------------------------
     await page.goto(`${BASE_URL}/services`, { waitUntil: "networkidle" });
     await page.waitForSelector("tbody tr", { timeout: 10_000 });
     // MiniHealthBar fetches health history per row — give all 6 a render cycle
     await page.waitForTimeout(800);
-    await page.screenshot({ path: "screenshots/3.png" });
-    console.log("✓ screenshots/3.png");
+    await page.screenshot({ path: "screenshots/4.png" });
+    console.log("✓ screenshots/4.png");
   } finally {
     await browser.close();
     stopVite();

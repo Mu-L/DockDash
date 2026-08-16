@@ -33,6 +33,7 @@ export const serviceResponseSchema = z
     id: z.string(),
     name: z.string(),
     host: z.string(),
+    protocol: z.enum(ServiceProtocol).nullable().optional(),
     ports: z.array(z.number().int()),
     checkPort: z.number().int().nullable().optional(),
     source: z.enum(ServiceSource),
@@ -200,6 +201,8 @@ export const dashboardConfigResponseSchema = z
   .object({
     version: z.string(),
     appriseConfigured: z.boolean(),
+    certVaultConfigured: z.boolean(),
+    certVaultUrl: z.string().nullable(),
     dockerHosts: z.array(z.string()),
     kubernetesEnabled: z.string(),
     kubernetesContexts: z.array(z.string()),
@@ -219,8 +222,26 @@ export const dashboardConfigResponseSchema = z
     terminalEnabled: z.boolean(),
   })
   .strip() satisfies z.ZodType<
-  { version: string; appriseConfigured: boolean } & ClientSchemaConfig
+  { version: string; appriseConfigured: boolean; certVaultConfigured: boolean } & ClientSchemaConfig
 >;
+
+export const tlsCertificateResponseSchema = z.object({
+  serviceId: z.string(),
+  hostname: z.string(),
+  port: z.number().int(),
+  health: z.enum(["healthy", "warning", "error"]),
+  certVaultStatus: z.enum(["in-use", "different"]).optional(),
+  trusted: z.boolean(),
+  hostnameValid: z.boolean(),
+  validFrom: z.string().nullable(),
+  validTo: z.string().nullable(),
+  daysRemaining: z.number().int().nullable(),
+  issuer: z.string().nullable(),
+  serial: z.string().nullable(),
+  fingerprintSha256: z.string().nullable(),
+  domains: z.array(z.string()),
+  error: z.string().optional(),
+});
 
 export const authStateResponseSchema = z
   .object({
@@ -248,6 +269,7 @@ export type ChangelogRelease = z.infer<typeof changelogReleaseResponseSchema>;
 export type ChangelogResponse = z.infer<typeof changelogResponseSchema>;
 export type CheckAllServicesResponse = z.infer<typeof checkAllServicesResponseSchema>;
 export type ContainerStats = z.infer<typeof containerStatsResponseSchema>;
+export type TlsCertificate = z.infer<typeof tlsCertificateResponseSchema>;
 export type DashboardConfig = z.infer<typeof dashboardConfigResponseSchema>;
 export type DockerHostHealth = z.infer<typeof dockerHostHealthResponseSchema>[number];
 export type KubernetesClusterHealth = z.infer<typeof kubernetesClusterHealthResponseSchema>[number];

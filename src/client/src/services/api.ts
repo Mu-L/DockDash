@@ -31,6 +31,7 @@ import {
   serviceLinkResponseSchema,
   serviceResponseSchema,
   serviceStatusResponseSchema,
+  tlsCertificateResponseSchema,
 } from "@shared/responseSchemas.js";
 
 const api = axios.create({
@@ -68,6 +69,21 @@ export const discoveryApi = {
 
 export const configApi = {
   get: () => validated(api.get("/config"), dashboardConfigResponseSchema),
+};
+
+export const tlsCertificateApi = {
+  getAll: (refresh = false) =>
+    validated(
+      api.get("/tls-certificates", { params: refresh ? { refresh: true } : undefined }),
+      tlsCertificateResponseSchema.array(),
+    ),
+  getForService: (serviceId: string, refresh = false) =>
+    validated(
+      api.get(`/services/${serviceId}/tls-certificate`, {
+        params: refresh ? { refresh: true } : undefined,
+      }),
+      tlsCertificateResponseSchema,
+    ),
 };
 
 export const authApi = {

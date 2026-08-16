@@ -39,6 +39,34 @@
     "noResults": "No services match the current filters.",
     "updateBadge": "Update"
   },
+  "certificates": {
+    "protectingService": "Certificate",
+    "noDnsNames": "No DNS names reported",
+    "unknown": "Unknown",
+    "yes": "Yes",
+    "no": "No",
+    "daysRemaining": "{{count}} day",
+    "daysRemaining_other": "{{count}} days",
+    "expirationWithDays": "{{date}} ({{remaining}})",
+    "latestNotDeployed": "CertVault’s latest certificate is not deployed on this endpoint.",
+    "fields": {
+      "expires": "Expires",
+      "issuer": "Issuer",
+      "trusted": "Trusted",
+      "serial": "Serial",
+      "sha256Fingerprint": "SHA-256 fingerprint"
+    },
+    "status": {
+      "healthy": "Healthy",
+      "warning": "Warning",
+      "error": "Error"
+    },
+    "health": {
+      "healthy": "Certificate is healthy",
+      "warning": "Certificate has a warning",
+      "error": "Certificate has an issue"
+    }
+  },
   "dashboard": {
     "online": "Online",
     "updates": "Updates",
@@ -177,6 +205,8 @@
     "name": "Name",
     "namePlaceholder": "Service name",
     "host": "Host",
+    "protocol": "Protocol",
+    "protocolNone": "None",
     "hostPlaceholder": "IP address or hostname",
     "ports": "Ports",
     "portsPlaceholder": "e.g., 8080",

@@ -1,19 +1,22 @@
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import type { Service } from "@shared";
-import { isContainerService } from "@shared";
+import type { Service, TlsCertificate } from "@shared";
+import { isContainerService, resolveTlsEndpoint, ServiceProtocol } from "@shared";
 import type { UpdateServiceRequest } from "@shared/requestSchemas.js";
 
 import { NumberInput } from "@/components/NumberInput";
+import { Select } from "@/components/Select";
 import { NumberTagArrayInput } from "@/components/TagArrayInput";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useConfig } from "@/context/ConfigContext";
 import { useFormValidation } from "@/hooks/useFormValidation";
+import { tlsCertificateApi } from "@/services/api";
 
 import { ContainerResourceMonitor } from "./ContainerResourceMonitor";
 import { HealthHistoryGraph } from "./HealthHistoryGraph";
+import { LiveCertificateSummary } from "./LiveCertificateSummary";
 import { FormGroup, Label } from "./modals/BaseModal";
 
 interface ServiceDetailsProps {
@@ -29,9 +32,13 @@ export function ServiceDetails({ service, onSave, onDelete, onCancel }: ServiceD
   const config = useConfig();
   const [editName, setEditName] = useState(service.name);
   const [editHost, setEditHost] = useState(service.host);
+  const [editProtocol, setEditProtocol] = useState<ServiceProtocol | "">(service.protocol ?? "");
   const [editPorts, setEditPorts] = useState<number[]>(service.ports ?? []);
   const [editCheckPort, setEditCheckPort] = useState(service.checkPort?.toString() ?? "");
   const [metadataExpanded, setMetadataExpanded] = useState(false);
+  const [certificatesExpanded, setCertificatesExpanded] = useState(false);
+  const [liveCertificate, setLiveCertificate] = useState<TlsCertificate | null>(null);
+  const [certificateError, setCertificateError] = useState<string | null>(null);
   const { errors, validate, clearError } = useFormValidation({
     name: { required: t("modals.nameRequired") },
     host: { required: t("modals.hostRequired") },
@@ -50,6 +57,34 @@ export function ServiceDetails({ service, onSave, onDelete, onCancel }: ServiceD
         value: Array.isArray(value) ? value.join(", ") : String(value),
       }))
     : [];
+
+  useEffect(() => {
+    setLiveCertificate(null);
+    setCertificateError(null);
+    setCertificatesExpanded(false);
+
+    if (
+      !resolveTlsEndpoint({
+        host: service.host,
+        protocol: service.protocol,
+        checkPort: service.checkPort,
+      })
+    )
+      return;
+
+    let cancelled = false;
+
+    tlsCertificateApi
+      .getForService(service.id!)
+      .then(({ data }) => !cancelled && setLiveCertificate(data))
+      .catch((err: unknown) => {
+        if (!cancelled) setCertificateError(err instanceof Error ? err.message : String(err));
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [service.checkPort, service.host, service.id, service.protocol]);
 
   const handlePortsChange = (vals: string[]) => {
     setEditPorts(vals.map(Number).sort((a, b) => a - b));
@@ -73,6 +108,7 @@ export function ServiceDetails({ service, onSave, onDelete, onCancel }: ServiceD
     onSave({
       name: editName,
       host: editHost,
+      protocol: editProtocol || null,
       ports: editPorts,
       checkPort: isNaN(checkPort) ? null : checkPort,
     });
@@ -96,15 +132,56 @@ export function ServiceDetails({ service, onSave, onDelete, onCancel }: ServiceD
         </FormGroup>
         <FormGroup error={errors.host}>
           <Label>{t("modals.host")}</Label>
-          <Input
-            value={editHost}
-            onChange={(e) => {
-              setEditHost(e.target.value);
-              clearError("host");
-            }}
-            placeholder={t("modals.hostPlaceholder")}
-          />
+          <div className="flex">
+            <Select
+              value={editProtocol || "__none__"}
+              onValueChange={(value) =>
+                setEditProtocol(value === "__none__" ? "" : (value as ServiceProtocol))
+              }
+              options={[
+                { value: "__none__", label: t("modals.protocolNone") },
+                ...Object.values(ServiceProtocol).map((value) => ({
+                  value,
+                  label: value.toUpperCase(),
+                })),
+              ]}
+              className="w-32 shrink-0 rounded-r-none"
+              ariaLabel={t("modals.protocol")}
+            />
+            <Input
+              value={editHost}
+              onChange={(e) => {
+                setEditHost(e.target.value);
+                clearError("host");
+              }}
+              placeholder={t("modals.hostPlaceholder")}
+              className="-ml-px rounded-l-none"
+            />
+          </div>
         </FormGroup>
+
+        {(liveCertificate || certificateError) && (
+          <div className="mb-5">
+            <button
+              type="button"
+              onClick={() => setCertificatesExpanded((value) => !value)}
+              className="flex items-center gap-1.5 w-full bg-transparent border-none py-2 text-muted-foreground text-xs uppercase tracking-wide hover:text-secondary-foreground"
+            >
+              <span>{certificatesExpanded ? "▾" : "▸"}</span>
+              {t("certificates.protectingService")}
+            </button>
+            {certificatesExpanded && (
+              <div className="space-y-2">
+                {liveCertificate ? (
+                  <LiveCertificateSummary certificate={liveCertificate} />
+                ) : certificateError ? (
+                  <p className="text-xs text-destructive">{certificateError}</p>
+                ) : null}
+              </div>
+            )}
+          </div>
+        )}
+
         <FormGroup>
           <Label>{t("modals.ports")}</Label>
           <NumberTagArrayInput

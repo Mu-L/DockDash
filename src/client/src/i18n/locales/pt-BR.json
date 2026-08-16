@@ -39,6 +39,34 @@
     "noResults": "Nenhum serviço corresponde aos filtros atuais.",
     "updateBadge": "Atualização"
   },
+  "certificates": {
+    "protectingService": "Certificado",
+    "noDnsNames": "Nenhum nome DNS informado",
+    "unknown": "Desconhecido",
+    "yes": "Sim",
+    "no": "Não",
+    "daysRemaining": "{{count}} dia",
+    "daysRemaining_other": "{{count}} dias",
+    "expirationWithDays": "{{date}} ({{remaining}})",
+    "latestNotDeployed": "O certificado mais recente do CertVault não está implantado neste endpoint.",
+    "fields": {
+      "expires": "Expira em",
+      "issuer": "Emissor",
+      "trusted": "Confiável",
+      "serial": "Número de série",
+      "sha256Fingerprint": "Impressão digital SHA-256"
+    },
+    "status": {
+      "healthy": "Saudável",
+      "warning": "Aviso",
+      "error": "Erro"
+    },
+    "health": {
+      "healthy": "O certificado está saudável",
+      "warning": "O certificado tem um aviso",
+      "error": "O certificado tem um problema"
+    }
+  },
   "dashboard": {
     "online": "Online",
     "updates": "Atualizações",
@@ -177,6 +205,8 @@
     "name": "Nome",
     "namePlaceholder": "Nome do serviço",
     "host": "Host",
+    "protocol": "Protocolo",
+    "protocolNone": "Nenhum",
     "hostPlaceholder": "Endereço IP ou hostname",
     "ports": "Portas",
     "portsPlaceholder": "ex.: 8080",

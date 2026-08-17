@@ -1,0 +1,119 @@
+---
+title: Features
+description: Explore DockDash service monitoring, update intelligence, and container operations.
+---
+
+import dashboardScreenshot from "../screenshots/1.png";
+import detailsScreenshot from "../screenshots/2.png";
+import resourcesScreenshot from "../screenshots/3.png";
+import servicesScreenshot from "../screenshots/4.png";
+import changelogScreenshot from "../screenshots/5.png";
+import filesScreenshot from "../screenshots/6.png";
+import terminalScreenshot from "../screenshots/7.png";
+
+DockDash combines update monitoring, service health, resource history, and day-to-day container operations in a single self-hosted interface.
+
+## Interactive dashboard
+
+Arrange services on a freeform canvas, draw labeled connections, group related workloads, and keep live health and update state visible at a glance.
+
+<img
+  src={dashboardScreenshot.src}
+  width={dashboardScreenshot.width}
+  height={dashboardScreenshot.height}
+  loading="lazy"
+  decoding="async"
+  alt="DockDash dashboard canvas showing connected services"
+/>
+
+## Health and certificate details
+
+Inspect recent health history alongside each service's endpoint settings. For HTTPS services, DockDash shows certificate expiry, issuer, trust state, serial number, fingerprint, and [CertVault](https://github.com/dougmaitelli/CertVault) deployment status.
+
+<img
+  src={detailsScreenshot.src}
+  width={detailsScreenshot.width}
+  height={detailsScreenshot.height}
+  loading="lazy"
+  decoding="async"
+  alt="DockDash service details showing health history and TLS certificate information"
+/>
+
+## Resource history
+
+Review current and historical CPU and memory usage, together with Docker network and disk activity, from the service drawer.
+
+<img
+  src={resourcesScreenshot.src}
+  width={resourcesScreenshot.width}
+  height={resourcesScreenshot.height}
+  loading="lazy"
+  decoding="async"
+  alt="DockDash service details with resource history"
+/>
+
+## Service inventory
+
+The services table provides a compact inventory when you need to search, filter, sort, or compare everything at once.
+
+<img
+  src={servicesScreenshot.src}
+  width={servicesScreenshot.width}
+  height={servicesScreenshot.height}
+  loading="lazy"
+  decoding="async"
+  alt="DockDash services table"
+/>
+
+## Updates with context
+
+For version-shaped image tags, DockDash finds compatible registry tags and reports the actual version transition. It then resolves the source repository and shows the matching GitHub release notes.
+
+<img
+  src={changelogScreenshot.src}
+  width={changelogScreenshot.width}
+  height={changelogScreenshot.height}
+  loading="lazy"
+  decoding="async"
+  alt="DockDash changelog for an available container update"
+/>
+
+Floating tags such as `latest`, `stable`, and `dev` fall back to digest comparison, so mutable images are still monitored.
+
+## File explorer
+
+Browse container directories and inspect or edit text files without leaving DockDash. Available operations follow the tools and filesystem permissions inside the selected container.
+
+<img
+  src={filesScreenshot.src}
+  width={filesScreenshot.width}
+  height={filesScreenshot.height}
+  loading="lazy"
+  decoding="async"
+  alt="DockDash file explorer browsing a container filesystem"
+/>
+
+## Interactive terminal
+
+Open a live shell inside a container directly from the service drawer. DockDash uses Bash when available and falls back to `sh`.
+
+<img
+  src={terminalScreenshot.src}
+  width={terminalScreenshot.width}
+  height={terminalScreenshot.height}
+  loading="lazy"
+  decoding="async"
+  alt="DockDash interactive terminal connected to a container"
+/>
+
+## Integrations
+
+DockDash supports:
+
+- Local and remote Docker daemons
+- Kubernetes discovery, logs, exec, metrics, and pod recreation
+- Docker Hub, GHCR, and generic OCI registries
+- GitHub release notes and private GHCR access
+- [Apprise](https://github.com/caronc/apprise-api) notifications
+- OIDC authentication
+- [CertVault](https://github.com/dougmaitelli/CertVault) certificate inventory and deployment-state matching

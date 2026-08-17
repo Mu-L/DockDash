@@ -1,0 +1,58 @@
+---
+title: DockDash
+description: Monitor services, understand container updates, and operate your homelab from one dashboard.
+template: splash
+hero:
+  tagline: A self-hosted service monitoring dashboard with health and resource history, container operations, and semantic-version-aware update monitoring.
+  image:
+    file: ../screenshots/2.png
+    alt: DockDash service details showing container information and health history
+  actions:
+    - text: Get started
+      link: /DockDash/getting-started/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/dougmaitelli/DockDash
+      icon: external
+---
+
+import { Card, CardGrid } from "@astrojs/starlight/components";
+
+## Discover and monitor every service
+
+Bring Docker containers, Kubernetes workloads, network services, and manually added endpoints into one inventory. DockDash keeps their live state and recent behavior visible from the same dashboard.
+
+<CardGrid>
+  <Card title="Service discovery" icon="magnifier">
+    Scan local or remote Docker hosts, selected Kubernetes clusters and namespaces, and configurable
+    network ranges.
+  </Card>
+  <Card title="Interactive topology" icon="code-branch">
+    Arrange services on a shared canvas, group related workloads, and draw labeled relationships.
+  </Card>
+  <Card title="Health and uptime" icon="heart">
+    Track live service status and review health history across the last 1, 7, or 30 days.
+  </Card>
+  <Card title="Resource history" icon="clock">
+    Follow current and historical CPU and memory usage, plus Docker network and disk activity.
+  </Card>
+</CardGrid>
+
+## Know what actually changed
+
+DockDash understands version-shaped image tags. Instead of only reporting that a digest changed, it can tell you that a pinned service can move from **1.25 to 1.26**, then place the matching release notes beside the update.
+
+<CardGrid>
+  <Card title="Version-aware updates" icon="rocket">
+    Compare compatible registry tags while preserving prefixes and suffixes such as `v`, `release-`,
+    and `-alpine`.
+  </Card>
+  <Card title="Changelogs" icon="notes">
+    Resolve the source repository and place the matching GitHub release notes beside the available
+    version.
+  </Card>
+  <Card title="Notifications" icon="email">
+    Send the running and available versions through [Apprise](https://github.com/caronc/apprise-api) instead of a generic image-change alert.
+  </Card>
+</CardGrid>

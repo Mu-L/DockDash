@@ -18,10 +18,10 @@ It also brings service discovery, uptime and resource monitoring, alerts, contai
 
 DockDash treats update checks differently depending on the image tag:
 
-| Your image tag | How DockDash checks it |
-| --- | --- |
+| Your image tag                                                      | How DockDash checks it                                                                                                                  |
+| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | A version tag such as `1.25`, `v1.25.3`, or `release-1.25.3-alpine` | Finds compatible tags in the registry and compares their numeric version components while preserving the tag's prefix and suffix family |
-| A floating tag such as `latest`, `stable`, or `dev` | Falls back to comparing the locally running image digest with the registry digest |
+| A floating tag such as `latest`, `stable`, or `dev`                 | Falls back to comparing the locally running image digest with the registry digest                                                       |
 
 When a newer version is found, DockDash:
 
@@ -33,7 +33,8 @@ This makes version pinning the expected workflow rather than an obstacle. You de
 
 ## Documentation
 
-- [Configuration reference](docs/CONFIGURATION.md)
+- [Documentation website](https://dougmaitelli.github.io/DockDash/)
+- [Configuration reference](docs/configuration/index.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
@@ -177,7 +178,7 @@ Adjust the `POST` / `EXEC` toggles to match the features you actually use — le
 
 ## Configuration
 
-DockDash is configured through environment variables. See the [configuration guide](docs/CONFIGURATION.md) for the complete variable reference, Docker connectivity options, OIDC setup, notifications, feature controls, and deployment guidance.
+DockDash is configured through environment variables. See the [configuration guide](docs/configuration/index.md) for the complete variable reference, Docker connectivity options, OIDC setup, notifications, feature controls, and deployment guidance.
 
 ## Development
 

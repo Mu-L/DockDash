@@ -1,5 +1,7 @@
 node_modules/
 dist/
+docs/
+screenshots/
 .git/
 *.db
 *.db-shm

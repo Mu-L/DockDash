@@ -10,6 +10,7 @@
     "dev:client": "vite",
     "dev": "concurrently \"pnpm run dev:server\" \"pnpm run dev:client\"",
     "dev:mock": "concurrently \"tsx --watch --tsconfig tsconfig.server.json src/server/mockEntry.ts\" \"pnpm run dev:client\"",
+    "docs:install": "pnpm --dir docs install --ignore-workspace",
     "docs:dev": "pnpm --dir docs dev",
     "docs:build": "pnpm --dir docs build",
     "docs:preview": "pnpm --dir docs preview",

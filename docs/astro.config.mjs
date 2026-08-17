@@ -6,7 +6,7 @@ export default defineConfig({
   base: "/DockDash",
   srcDir: ".",
   publicDir: "../src/client/public",
-  outDir: "../dist/docs",
+  outDir: "./dist",
   integrations: [
     starlight({
       title: "DockDash",

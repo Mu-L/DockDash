@@ -903,8 +903,8 @@ export function DashboardCanvas({
           style={{
             transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoomLevel})`,
             transformOrigin: "0 0",
-            width: "100%",
-            height: "100%",
+            width: `${canvasDimensions.w}px`,
+            height: `${canvasDimensions.h}px`,
             position: "relative",
             pointerEvents: "none",
           }}

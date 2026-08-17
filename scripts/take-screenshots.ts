@@ -572,7 +572,16 @@ async function main() {
     // laid-out DOM — this guarantees offsetWidth/offsetHeight are correct when
     // link paths are recomputed, avoiding misalignment on first render.
     await page.click('button[title="Fit to screen"]');
-    await page.waitForTimeout(600);
+    await page.waitForFunction((expectedLinks) => {
+      const linkLayer = document.querySelector("[data-link-layer]");
+
+      return (
+        linkLayer !== null &&
+        linkLayer.getBoundingClientRect().height > 0 &&
+        linkLayer.querySelectorAll("[data-link-id]").length === expectedLinks
+      );
+    }, DASHBOARD.links.length);
+    await page.waitForTimeout(100);
     await page.screenshot({ path: "screenshots/1.png" });
     console.log("✓ screenshots/1.png");
 

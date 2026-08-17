@@ -223,6 +223,7 @@ export function LinkLayer({
 
   return (
     <svg
+      data-link-layer
       style={{
         position: "absolute",
         top: 0,
@@ -245,7 +246,7 @@ export function LinkLayer({
           const by = p.endY + (dy * PORT_LABEL_H) / 2;
 
           return (
-            <g key={p.id}>
+            <g key={p.id} data-link-id={p.id}>
               <path
                 d={p.d}
                 fill="none"

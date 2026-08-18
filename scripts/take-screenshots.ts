@@ -233,29 +233,32 @@ const RESOURCE_HISTORY = Array.from({ length: 80 }, (_, i) => ({
   memoryPercent: 1.4 + (i / 80) * 0.3,
 }));
 
+const CHANGELOG_RELEASE = {
+  version: "v3.2.1",
+  publishedAt: "2024-12-20T10:00:00Z",
+  body: [
+    "## Bug Fixes",
+    "",
+    "- Fix certificate resolution for wildcard domains ([#11234](https://github.com/traefik/traefik/issues/11234))",
+    "- Fix middleware chain ordering in complex routing rules",
+    "",
+    "## Improvements",
+    "",
+    "- Improve WebSocket proxy performance under high connection load",
+    "- Reduce memory allocations during routing table updates",
+    "",
+    "## Dependencies",
+    "",
+    "- Update `golang.org/x/crypto` to v0.31.0",
+    "- Update Docker API client to v27.4.0",
+  ].join("\n"),
+  htmlUrl: "https://github.com/traefik/traefik/releases/tag/v3.2.1",
+};
+
 const CHANGELOG = {
   available: true,
-  release: {
-    version: "v3.2.1",
-    publishedAt: "2024-12-20T10:00:00Z",
-    body: [
-      "## Bug Fixes",
-      "",
-      "- Fix certificate resolution for wildcard domains ([#11234](https://github.com/traefik/traefik/issues/11234))",
-      "- Fix middleware chain ordering in complex routing rules",
-      "",
-      "## Improvements",
-      "",
-      "- Improve WebSocket proxy performance under high connection load",
-      "- Reduce memory allocations during routing table updates",
-      "",
-      "## Dependencies",
-      "",
-      "- Update `golang.org/x/crypto` to v0.31.0",
-      "- Update Docker API client to v27.4.0",
-    ].join("\n"),
-    htmlUrl: "https://github.com/traefik/traefik/releases/tag/v3.2.1",
-  },
+  release: CHANGELOG_RELEASE,
+  releases: [CHANGELOG_RELEASE],
 };
 
 const TLS_CERTIFICATES = [

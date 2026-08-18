@@ -249,6 +249,46 @@ describe("ChangelogService", () => {
     });
   });
 
+  describe("release ranges", () => {
+    it("returns every release newer than the current version through the latest version", async () => {
+      const svc = makeService({
+        metadata: {
+          image: "owner/my-app",
+          imageTag: "v1.0.0",
+          hasUpdate: true,
+          latestVersion: "v1.3.0",
+        },
+      });
+
+      mockAxios.get.mockResolvedValueOnce({
+        data: [
+          mockGithubRelease("v2.0.0"),
+          mockGithubRelease("v1.3.0"),
+          mockGithubRelease("v1.2.0"),
+          mockGithubRelease("v1.1.0"),
+          mockGithubRelease("v1.0.0"),
+        ],
+      });
+
+      const result = await changelogService.fetchChangelog(svc);
+
+      expect(result.available).toBe(true);
+
+      if (!result.available) throw new Error("Expected available changelog");
+
+      expect(result.releases.map((release) => release.version)).toEqual([
+        "v1.3.0",
+        "v1.2.0",
+        "v1.1.0",
+      ]);
+      expect(result.release).toEqual(result.releases[0]);
+      expect(mockAxios.get).toHaveBeenCalledWith(
+        expect.stringMatching(/\/repos\/owner\/my-app\/releases$/),
+        expect.objectContaining({ params: { per_page: 100, page: 1 } }),
+      );
+    });
+  });
+
   describe("rate limiting", () => {
     it("returns available:false when the GitHub API returns 403 (rate limit)", async () => {
       const svc = makeService({ metadata: { image: "owner/my-app", imageTag: "v1.0.0" } });

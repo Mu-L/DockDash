@@ -43,31 +43,39 @@ export function Changelog({ serviceId }: ChangelogProps) {
     );
   }
 
-  const { release } = data;
-
   return (
     <div className="flex flex-col gap-3 p-5 flex-1 overflow-y-auto">
-      <div className="flex items-center gap-2.5 flex-wrap">
-        <span className="text-xs font-mono bg-background border border-border rounded px-2 py-0.5 text-primary">
-          {release.version}
-        </span>
-        <span className="text-xs text-muted-foreground">
-          {new Date(release.publishedAt).toLocaleDateString()}
-        </span>
-        <a
-          href={release.htmlUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="text-xs text-primary no-underline hover:underline ml-auto"
+      {data.releases.map((release, index) => (
+        <section
+          key={release.htmlUrl || release.version}
+          className={index === 0 ? "" : "border-t border-border pt-4 mt-1"}
         >
-          View on GitHub ↗
-        </a>
-      </div>
-      <div className="changelog-body">
-        <ReactMarkdown remarkPlugins={[remarkEmoji]} rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-          {release.body || "_No release notes provided._"}
-        </ReactMarkdown>
-      </div>
+          <div className="flex items-center gap-2.5 flex-wrap mb-3">
+            <span className="text-xs font-mono bg-background border border-border rounded px-2 py-0.5 text-primary">
+              {release.version}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {new Date(release.publishedAt).toLocaleDateString()}
+            </span>
+            <a
+              href={release.htmlUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-xs text-primary no-underline hover:underline ml-auto"
+            >
+              View on GitHub ↗
+            </a>
+          </div>
+          <div className="changelog-body">
+            <ReactMarkdown
+              remarkPlugins={[remarkEmoji]}
+              rehypePlugins={[rehypeRaw, rehypeSanitize]}
+            >
+              {release.body || "_No release notes provided._"}
+            </ReactMarkdown>
+          </div>
+        </section>
+      ))}
     </div>
   );
 }

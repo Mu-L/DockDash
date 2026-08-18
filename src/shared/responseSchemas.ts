@@ -168,7 +168,13 @@ export const changelogReleaseResponseSchema = z
   .strip();
 
 export const changelogResponseSchema = z.discriminatedUnion("available", [
-  z.object({ available: z.literal(true), release: changelogReleaseResponseSchema }).strip(),
+  z
+    .object({
+      available: z.literal(true),
+      release: changelogReleaseResponseSchema,
+      releases: z.array(changelogReleaseResponseSchema),
+    })
+    .strip(),
   z.object({ available: z.literal(false), reason: z.string() }).strip(),
 ]);
 

@@ -144,6 +144,70 @@ export class ChangelogService {
     return null;
   }
 
+  private toRelease(data: Record<string, unknown>): ChangelogRelease {
+    return {
+      version: String(data.tag_name),
+      publishedAt: String(data.published_at),
+      body: typeof data.body === "string" ? data.body : "",
+      htmlUrl: String(data.html_url),
+    };
+  }
+
+  private async fetchReleasesBetween(
+    repo: string,
+    currentTag: string,
+    latestTag: string,
+  ): Promise<ChangelogRelease[]> {
+    const current = TagParser.extractSemVer(currentTag);
+    const latest = TagParser.extractSemVer(latestTag);
+
+    if (!current || !latest) return [];
+
+    const releases: ChangelogRelease[] = [];
+    const seenVersions = new Set<string>();
+
+    // GitHub returns releases newest first. Continue until a page is not full so ranges
+    // spanning more than one API page still include every intervening release.
+    for (let page = 1; ; page++) {
+      try {
+        const { data } = await axios.get(`${GITHUB_API}/repos/${repo}/releases`, {
+          headers: this.authHeaders(),
+          params: { per_page: 100, page },
+        });
+        const pageReleases: Record<string, unknown>[] = Array.isArray(data) ? data : [];
+
+        for (const item of pageReleases) {
+          if (item.draft === true) continue;
+
+          const tag = typeof item.tag_name === "string" ? item.tag_name : "";
+          const parsed = TagParser.extractSemVer(tag);
+
+          if (!parsed) continue;
+
+          if (TagParser.compareSemVer(parsed, current) <= 0) continue;
+
+          if (TagParser.compareSemVer(parsed, latest) > 0) continue;
+
+          // A repository can publish multiple variants for one numeric version. Prefer the
+          // first one returned by GitHub and show each version only once.
+          const versionKey = parsed.parts.join(".");
+
+          if (seenVersions.has(versionKey)) continue;
+
+          seenVersions.add(versionKey);
+          releases.push(this.toRelease(item));
+        }
+
+        if (pageReleases.length < 100) break;
+      } catch (err) {
+        logger.warn(`Changelog: failed to list releases for ${repo} —`, err);
+        break;
+      }
+    }
+
+    return releases.sort((a, b) => TagParser.compareSemVer(b.version, a.version));
+  }
+
   async fetchChangelog(service: Service): Promise<ChangelogResponse> {
     const tag = service.metadata?.hasUpdate
       ? (service.metadata.latestVersion ?? service.metadata.imageTag)
@@ -166,16 +230,36 @@ export class ChangelogService {
       return { available: false, reason: "Could not resolve GitHub repository" };
     }
 
-    const release = await this.fetchRelease(repo, tag);
+    let releases: ChangelogRelease[] = [];
 
-    if (!release) {
+    if (
+      service.metadata?.hasUpdate &&
+      service.metadata.imageTag &&
+      service.metadata.latestVersion
+    ) {
+      releases = await this.fetchReleasesBetween(
+        repo,
+        service.metadata.imageTag,
+        service.metadata.latestVersion,
+      );
+    }
+
+    // Preserve exact-tag lookup (including its tag variants) as a fallback for repositories
+    // that do not expose a semver-compatible release list.
+    if (releases.length === 0) {
+      const release = await this.fetchRelease(repo, tag);
+
+      if (release) releases = [release];
+    }
+
+    if (releases.length === 0) {
       return {
         available: false,
         reason: `No release found for tag "${tag}" in ${repo}`,
       };
     }
 
-    const result: ChangelogResponse = { available: true, release };
+    const result: ChangelogResponse = { available: true, release: releases[0], releases };
 
     cache.set(cacheKey, result);
 
